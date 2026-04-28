@@ -128,7 +128,7 @@ export default function Dashboard() {
             <BarChart data={monthly}>
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${v}K`} />
-              <Tooltip formatter={(v: number) => `$${v}K`} />
+              <Tooltip formatter={(v) => `$${v}K`} />
               <Bar dataKey="revenue" name="Доход"  fill="#185FA5" radius={[3,3,0,0]} />
               <Bar dataKey="losses"  name="Потери" fill="#D85A30" radius={[3,3,0,0]} />
             </BarChart>
@@ -142,7 +142,7 @@ export default function Dashboard() {
                 {donut.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
               <Legend />
-              <Tooltip formatter={(v: number) => `${v}%`} />
+              <Tooltip formatter={(v) => `$${v}K`} />
             </PieChart>
           </ResponsiveContainer>
         </div>
