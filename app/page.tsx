@@ -14,6 +14,8 @@ type Source = {
   status: string
 }
 
+const emptyForm = { name: '', category: '', revenue: 0, losses: 0, status: 'healthy' }
+
 const monthly = [
   { month: 'Ноя', revenue: 720, losses: 160 },
   { month: 'Дек', revenue: 810, losses: 200 },
@@ -23,11 +25,8 @@ const monthly = [
   { month: 'Апр', revenue: 840, losses: 200 },
 ]
 
-const COLORS = ['#185FA5', '#1D9E75', '#BA7517', '#7F77DD']
-
-const statusLabel: Record<string, string> = {
-  healthy: 'Норма', watch: 'Внимание', at_risk: 'Риск'
-}
+const COLORS = ['#185FA5', '#1D9E75', '#BA7517', '#7F77DD', '#D85A30']
+const statusLabel: Record<string, string> = { healthy: 'Норма', watch: 'Внимание', at_risk: 'Риск' }
 const statusColor: Record<string, string> = {
   healthy: 'bg-green-100 text-green-800',
   watch: 'bg-yellow-100 text-yellow-800',
@@ -38,10 +37,13 @@ export default function Dashboard() {
   const [period, setPeriod] = useState('6m')
   const [sources, setSources] = useState<Source[]>([])
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
   const router = useRouter()
   const supabaseAuth = createClient()
 
-  // Проверка авторизации
   useEffect(() => {
     async function checkAuth() {
       const { data: { user } } = await supabaseAuth.auth.getUser()
@@ -50,26 +52,48 @@ export default function Dashboard() {
     checkAuth()
   }, [])
 
-  // Загрузка данных
-  useEffect(() => {
-    async function load() {
-      const { data, error } = await supabase.from('sources').select('*')
-      if (!error && data) setSources(data)
-      setLoading(false)
+  async function load() {
+    const { data, error } = await supabase.from('sources').select('*')
+    if (!error && data) setSources(data)
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  function openAdd() {
+    setForm(emptyForm)
+    setEditingId(null)
+    setShowForm(true)
+  }
+
+  function openEdit(s: Source) {
+    setForm({ name: s.name, category: s.category, revenue: s.revenue, losses: s.losses, status: s.status })
+    setEditingId(s.id)
+    setShowForm(true)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    if (editingId) {
+      await supabase.from('sources').update(form).eq('id', editingId)
+    } else {
+      await supabase.from('sources').insert(form)
     }
-    load()
-  }, [])
+    await load()
+    setShowForm(false)
+    setSaving(false)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Удалить этот источник?')) return
+    await supabase.from('sources').delete().eq('id', id)
+    await load()
+  }
 
   const totalRevenue = sources.reduce((s, r) => s + r.revenue, 0)
   const totalLosses = sources.reduce((s, r) => s + r.losses, 0)
-  const netMargin = totalRevenue > 0
-    ? (((totalRevenue - totalLosses) / totalRevenue) * 100).toFixed(1)
-    : '0.0'
-
-  const donut = sources.map(s => ({
-    name: s.name,
-    value: Math.round((s.revenue / totalRevenue) * 100)
-  }))
+  const netMargin = totalRevenue > 0 ? (((totalRevenue - totalLosses) / totalRevenue) * 100).toFixed(1) : '0.0'
+  const donut = sources.map(s => ({ name: s.name, value: Math.round((s.revenue / totalRevenue) * 100) }))
 
   if (loading) return (
     <main className="p-6 flex items-center justify-center min-h-screen">
@@ -80,26 +104,72 @@ export default function Dashboard() {
   return (
     <main className="p-6 max-w-5xl mx-auto">
 
+      {/* Модальная форма */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-lg font-medium mb-4">
+              {editingId ? 'Редактировать источник' : 'Добавить источник'}
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Название</label>
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Категория</label>
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.category}
+                  onChange={e => setForm({ ...form, category: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Доход (K)</label>
+                  <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm" value={form.revenue}
+                    onChange={e => setForm({ ...form, revenue: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Потери (K)</label>
+                  <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm" value={form.losses}
+                    onChange={e => setForm({ ...form, losses: Number(e.target.value) })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Статус</label>
+                <select className="w-full border rounded-lg px-3 py-2 text-sm" value={form.status}
+                  onChange={e => setForm({ ...form, status: e.target.value })}>
+                  <option value="healthy">Норма</option>
+                  <option value="watch">Внимание</option>
+                  <option value="at_risk">Риск</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+                {saving ? 'Сохранение...' : 'Сохранить'}
+              </button>
+              <button onClick={() => setShowForm(false)}
+                className="flex-1 border rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Шапка */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-medium">Дашборд доходов и потерь</h1>
         <div className="flex items-center gap-3">
-          <select
-            value={period}
-            onChange={e => setPeriod(e.target.value)}
-            className="text-sm border rounded px-2 py-1"
-          >
+          <select value={period} onChange={e => setPeriod(e.target.value)}
+            className="text-sm border rounded px-2 py-1">
             <option value="6m">Последние 6 месяцев</option>
             <option value="q">Квартал</option>
             <option value="ytd">С начала года</option>
           </select>
-          <button
-            onClick={async () => {
-              await supabaseAuth.auth.signOut()
-              router.push('/login')
-            }}
-            className="text-sm text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={async () => { await supabaseAuth.auth.signOut(); router.push('/login') }}
+            className="text-sm text-gray-400 hover:text-gray-600">
             Выйти
           </button>
         </div>
@@ -109,9 +179,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Общий доход',  value: `$${totalRevenue.toLocaleString()}K` },
-          { label: 'Общие потери', value: `$${totalLosses.toLocaleString()}K`  },
-          { label: 'Чистая маржа', value: `${netMargin}%`                      },
-          { label: 'Источников',  value: sources.length.toString()             },
+          { label: 'Общие потери', value: `$${totalLosses.toLocaleString()}K` },
+          { label: 'Чистая маржа', value: `${netMargin}%` },
+          { label: 'Источников',  value: sources.length.toString() },
         ].map(m => (
           <div key={m.label} className="bg-gray-50 rounded-lg p-4">
             <p className="text-xs text-gray-500 mb-1">{m.label}</p>
@@ -142,7 +212,7 @@ export default function Dashboard() {
                 {donut.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
               <Legend />
-              <Tooltip formatter={(v) => `$${v}K`} />
+              <Tooltip formatter={(v) => `${v}%`} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -150,7 +220,13 @@ export default function Dashboard() {
 
       {/* Таблица */}
       <div className="border rounded-xl p-4">
-        <p className="text-sm font-medium mb-3">Разбивка по источникам</p>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-sm font-medium">Разбивка по источникам</p>
+          <button onClick={openAdd}
+            className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">
+            + Добавить
+          </button>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-400 border-b">
@@ -160,6 +236,7 @@ export default function Dashboard() {
               <th className="text-right pb-2">Потери</th>
               <th className="text-right pb-2">Нетто</th>
               <th className="text-left pb-2 pl-3">Статус</th>
+              <th className="text-right pb-2">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -174,6 +251,14 @@ export default function Dashboard() {
                   <span className={`text-xs px-2 py-1 rounded-full ${statusColor[s.status]}`}>
                     {statusLabel[s.status]}
                   </span>
+                </td>
+                <td className="py-2 text-right">
+                  <button onClick={() => openEdit(s)} className="text-xs text-blue-500 hover:text-blue-700 mr-2">
+                    Изменить
+                  </button>
+                  <button onClick={() => handleDelete(s.id)} className="text-xs text-red-400 hover:text-red-600">
+                    Удалить
+                  </button>
                 </td>
               </tr>
             ))}
