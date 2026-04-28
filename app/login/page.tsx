@@ -24,29 +24,29 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white border rounded-xl p-8 w-full max-w-sm">
-        <h1 className="text-xl font-medium mb-6">Вход в дашборд</h1>
+    <main className="min-h-screen flex items-center justify-center" style={{ background: '#f3f4f6' }}>
+      <div className="bg-white border border-gray-200 rounded-xl p-8 w-full max-w-sm shadow-sm">
+        <h1 className="text-xl font-medium mb-6 text-gray-900">Вход в дашборд</h1>
 
         <div className="mb-4">
-          <label className="text-sm text-gray-500 mb-1 block">Email</label>
+          <label className="text-sm text-gray-600 mb-1 block">Email</label>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:border-blue-500"
             placeholder="you@example.com"
           />
         </div>
 
         <div className="mb-6">
-          <label className="text-sm text-gray-500 mb-1 block">Пароль</label>
+          <label className="text-sm text-gray-600 mb-1 block">Пароль</label>
           <input
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:border-blue-500"
             placeholder="••••••••"
           />
         </div>

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { createClient } from '../lib/supabase-browser'
 import { useRouter } from 'next/navigation'
@@ -25,7 +25,7 @@ const monthly = [
   { month: 'Апр', revenue: 840, losses: 200 },
 ]
 
-const COLORS = ['#185FA5', '#1D9E75', '#BA7517', '#7F77DD', '#D85A30']
+const COLORS = ['#185FA5', '#1D9E75', '#BA7517', '#7F77DD', '#D85A30', '#E05C9A']
 const statusLabel: Record<string, string> = { healthy: 'Норма', watch: 'Внимание', at_risk: 'Риск' }
 const statusColor: Record<string, string> = {
   healthy: 'bg-green-100 text-green-800',
@@ -97,46 +97,46 @@ export default function Dashboard() {
 
   if (loading) return (
     <main className="p-6 flex items-center justify-center min-h-screen">
-      <p className="text-gray-400">Загрузка данных...</p>
+      <p className="text-gray-500">Загрузка данных...</p>
     </main>
   )
 
   return (
-    <main className="p-6 max-w-5xl mx-auto">
+    <main className="p-6 max-w-5xl mx-auto" style={{ color: '#111' }}>
 
       {/* Модальная форма */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-medium mb-4">
+            <h2 className="text-lg font-medium mb-4 text-gray-900">
               {editingId ? 'Редактировать источник' : 'Добавить источник'}
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Название</label>
-                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.name}
+                <label className="text-xs text-gray-600 mb-1 block">Название</label>
+                <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white" value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Категория</label>
-                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.category}
+                <label className="text-xs text-gray-600 mb-1 block">Категория</label>
+                <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white" value={form.category}
                   onChange={e => setForm({ ...form, category: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Доход (K)</label>
-                  <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm" value={form.revenue}
+                  <label className="text-xs text-gray-600 mb-1 block">Доход (K)</label>
+                  <input type="number" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white" value={form.revenue}
                     onChange={e => setForm({ ...form, revenue: Number(e.target.value) })} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Потери (K)</label>
-                  <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm" value={form.losses}
+                  <label className="text-xs text-gray-600 mb-1 block">Потери (K)</label>
+                  <input type="number" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white" value={form.losses}
                     onChange={e => setForm({ ...form, losses: Number(e.target.value) })} />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Статус</label>
-                <select className="w-full border rounded-lg px-3 py-2 text-sm" value={form.status}
+                <label className="text-xs text-gray-600 mb-1 block">Статус</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white" value={form.status}
                   onChange={e => setForm({ ...form, status: e.target.value })}>
                   <option value="healthy">Норма</option>
                   <option value="watch">Внимание</option>
@@ -150,7 +150,7 @@ export default function Dashboard() {
                 {saving ? 'Сохранение...' : 'Сохранить'}
               </button>
               <button onClick={() => setShowForm(false)}
-                className="flex-1 border rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
+                className="flex-1 border border-gray-300 rounded-lg py-2 text-sm text-gray-700 hover:bg-gray-50">
                 Отмена
               </button>
             </div>
@@ -160,16 +160,16 @@ export default function Dashboard() {
 
       {/* Шапка */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-medium">Дашборд доходов и потерь</h1>
+        <h1 className="text-xl font-medium text-gray-900">Дашборд доходов и потерь</h1>
         <div className="flex items-center gap-3">
           <select value={period} onChange={e => setPeriod(e.target.value)}
-            className="text-sm border rounded px-2 py-1">
+            className="text-sm border border-gray-300 rounded px-2 py-1 text-gray-900 bg-white">
             <option value="6m">Последние 6 месяцев</option>
             <option value="q">Квартал</option>
             <option value="ytd">С начала года</option>
           </select>
           <button onClick={async () => { await supabaseAuth.auth.signOut(); router.push('/login') }}
-            className="text-sm text-gray-400 hover:text-gray-600">
+            className="text-sm text-gray-500 hover:text-gray-800">
             Выйти
           </button>
         </div>
@@ -183,45 +183,53 @@ export default function Dashboard() {
           { label: 'Чистая маржа', value: `${netMargin}%` },
           { label: 'Источников',  value: sources.length.toString() },
         ].map(m => (
-          <div key={m.label} className="bg-gray-50 rounded-lg p-4">
+          <div key={m.label} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-            <p className="text-2xl font-medium">{m.value}</p>
+            <p className="text-2xl font-medium text-gray-900">{m.value}</p>
           </div>
         ))}
       </div>
 
       {/* Графики */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="border rounded-xl p-4">
-          <p className="text-sm font-medium mb-3">Доходы vs потери — по месяцам</p>
-          <ResponsiveContainer width="100%" height={200}>
+        <div className="border border-gray-200 rounded-xl p-4 bg-white">
+          <p className="text-sm font-medium mb-3 text-gray-900">Доходы vs потери — по месяцам</p>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={monthly}>
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${v}K`} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#555' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#555' }} tickFormatter={v => `$${v}K`} />
               <Tooltip formatter={(v) => `$${v}K`} />
               <Bar dataKey="revenue" name="Доход"  fill="#185FA5" radius={[3,3,0,0]} />
               <Bar dataKey="losses"  name="Потери" fill="#D85A30" radius={[3,3,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="border rounded-xl p-4">
-          <p className="text-sm font-medium mb-3">Доля по источникам</p>
-          <ResponsiveContainer width="100%" height={200}>
+
+        <div className="border border-gray-200 rounded-xl p-4 bg-white">
+          <p className="text-sm font-medium mb-2 text-gray-900">Доля по источникам</p>
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={donut} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value">
+              <Pie data={donut} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value">
                 {donut.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
-              <Legend />
               <Tooltip formatter={(v) => `${v}%`} />
             </PieChart>
           </ResponsiveContainer>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+            {donut.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                <span className="text-xs text-gray-600">{d.name} {d.value}%</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Таблица */}
-      <div className="border rounded-xl p-4">
+      <div className="border border-gray-200 rounded-xl p-4 bg-white">
         <div className="flex justify-between items-center mb-3">
-          <p className="text-sm font-medium">Разбивка по источникам</p>
+          <p className="text-sm font-medium text-gray-900">Разбивка по источникам</p>
           <button onClick={openAdd}
             className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">
             + Добавить
@@ -229,7 +237,7 @@ export default function Dashboard() {
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-400 border-b">
+            <tr className="text-xs text-gray-500 border-b border-gray-200">
               <th className="text-left pb-2">Источник</th>
               <th className="text-left pb-2">Категория</th>
               <th className="text-right pb-2">Доход</th>
@@ -241,12 +249,12 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {sources.map(s => (
-              <tr key={s.id} className="border-b last:border-0">
-                <td className="py-2">{s.name}</td>
-                <td className="py-2 text-gray-400">{s.category}</td>
-                <td className="py-2 text-right">${s.revenue}K</td>
-                <td className="py-2 text-right">${s.losses}K</td>
-                <td className="py-2 text-right">${s.revenue - s.losses}K</td>
+              <tr key={s.id} className="border-b border-gray-100 last:border-0">
+                <td className="py-2 text-gray-900">{s.name}</td>
+                <td className="py-2 text-gray-500">{s.category}</td>
+                <td className="py-2 text-right text-gray-900">${s.revenue}K</td>
+                <td className="py-2 text-right text-gray-900">${s.losses}K</td>
+                <td className="py-2 text-right text-gray-900">${s.revenue - s.losses}K</td>
                 <td className="py-2 pl-3">
                   <span className={`text-xs px-2 py-1 rounded-full ${statusColor[s.status]}`}>
                     {statusLabel[s.status]}
