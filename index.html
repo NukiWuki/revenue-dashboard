@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Baitun CRM Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2333;--border:#2a2f42;
+  --text:#e8eaf0;--muted:#7b82a0;--accent:#00c896;--accent2:#4f8ef7;
+  --accent3:#f7934f;--accent4:#e45c8a;--danger:#e45c5c;
+  --font:'Inter',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;gap:10px}
+.logo{font-size:18px;font-weight:600;letter-spacing:-0.5px;color:var(--text)}
+.logo em{color:var(--accent);font-style:normal}
+.sync-info{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.dot.red{background:var(--danger);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.filterbar{display:flex;align-items:center;gap:10px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+.filterbar label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:5px 10px;border-radius:6px;cursor:pointer;height:32px}
+select:focus{outline:none;border-color:var(--accent)}
+.btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font);font-size:12px;padding:5px 14px;border-radius:6px;cursor:pointer;transition:.15s;height:32px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:500}
+.btn.primary:hover{opacity:.85}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:var(--muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-box{margin:24px;background:rgba(228,92,92,.1);border:1px solid rgba(228,92,92,.3);border-radius:10px;padding:20px;color:#e45c5c}
+.error-box h3{margin-bottom:8px;font-size:14px;font-weight:600}
+.error-box code{font-size:12px;opacity:.8;display:block;margin-top:8px;word-break:break-all;background:rgba(0,0,0,.2);padding:8px;border-radius:4px}
+.content{padding:20px 24px;flex:1}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;transition:.2s;cursor:default}
+.kpi:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0}
+.kpi.green::before{background:var(--accent)}.kpi.blue::before{background:var(--accent2)}
+.kpi.orange::before{background:var(--accent3)}.kpi.pink::before{background:var(--accent4)}
+.kpi.red::before{background:var(--danger)}
+.kpi-icon{font-size:18px;margin-bottom:8px;opacity:.7}
+.kpi-val{font-size:24px;font-weight:600;color:var(--text);line-height:1}
+.kpi-label{font-size:11px;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.3px}
+.kpi-sub{font-size:11px;margin-top:5px;color:var(--muted)}
+.kpi-sub.up{color:var(--accent)}.kpi-sub.down{color:var(--danger)}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.chart-box.full{grid-column:1/-1}
+.box-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.box-sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.funnel{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.funnel-row{display:flex;align-items:center;gap:8px}
+.funnel-label{font-size:11px;color:var(--muted);width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.funnel-bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:20px;overflow:hidden}
+.funnel-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:11px;font-weight:500;color:#000;min-width:28px}
+.funnel-count{font-size:11px;color:var(--text);width:40px;text-align:right;flex-shrink:0}
+.table-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px}
+.table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:6px}
+.tab{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font);transition:.15s}
+.tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:500}
+.tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid rgba(42,47,66,.5);font-size:13px;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.b-new{background:rgba(79,142,247,.15);color:var(--accent2)}
+.b-work{background:rgba(0,200,150,.15);color:var(--accent)}
+.b-wait{background:rgba(247,147,79,.15);color:var(--accent3)}
+.b-won{background:rgba(0,200,150,.2);color:var(--accent)}
+.b-lost{background:rgba(228,92,92,.15);color:var(--danger)}
+.b-junk{background:rgba(123,130,160,.15);color:var(--muted)}
+.src{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+.s-fb{background:rgba(79,142,247,.15);color:#4f8ef7}
+.s-ig{background:rgba(228,92,138,.15);color:#e45c8a}
+.s-tt{background:rgba(230,230,230,.1);color:#bbb}
+.s-site{background:rgba(0,200,150,.15);color:#00c896}
+.s-call{background:rgba(247,147,79,.15);color:#f7934f}
+.s-google{background:rgba(66,133,244,.15);color:#4285f4}
+.s-wa{background:rgba(37,211,102,.15);color:#25d366}
+.s-other{background:rgba(123,130,160,.15);color:#7b82a0}
+.mgr-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,47,66,.4)}
+.mgr-row:last-child{border-bottom:none}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;color:#000}
+.mgr-info{flex:1}
+.mgr-name{font-size:13px;color:var(--text)}
+.mgr-stats{font-size:11px;color:var(--muted);margin-top:2px}
+.mgr-bar-wrap{width:80px;background:var(--surface2);border-radius:3px;height:5px}
+.mgr-bar{height:100%;border-radius:3px}
+.multicheck-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;cursor:pointer;font-size:13px;color:var(--text)}
+.multicheck-item:hover{background:rgba(255,255,255,.05)}
+.multicheck-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.progress-wrap{margin-top:16px;padding:16px;background:var(--surface2);border-radius:8px;display:none}
+.progress-text{font-size:12px;color:var(--muted);margin-bottom:8px}
+.progress-bar-wrap{background:var(--border);border-radius:4px;height:6px;overflow:hidden}
+.progress-bar{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+@media(max-width:700px){
+  .charts-row{grid-template-columns:1fr}
+  .chart-box.full{grid-column:1}
+  .header,.filterbar,.content{padding-left:16px;padding-right:16px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:400px){.kpi-grid{grid-template-columns:1fr}}
+
+/* === LOGIN SCREEN === */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{font-size:22px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:-.5px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.login-field{margin-bottom:16px}
+.login-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:14px;padding:10px 14px;border-radius:8px;outline:none;transition:.2s}
+.login-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,200,150,.1)}
+.login-btn{width:100%;background:var(--accent);color:#000;font-family:var(--font);font-size:14px;font-weight:600;padding:12px;border:none;border-radius:8px;cursor:pointer;margin-top:8px;transition:.2s}
+.login-btn:hover{opacity:.88}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{background:rgba(228,92,92,.12);border:1px solid rgba(228,92,92,.3);color:#e45c5c;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;display:none}
+.login-attempts{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">baitun.crm</div>
+    <div class="login-sub">Аналитический дашборд · Войдите для продолжения</div>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Пароль</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Войти</button>
+    <div class="login-attempts" id="loginAttempts"></div>
+  </div>
+</div>
+
+<div class="app" id="appContainer" style="display:none">
+<div class="header">
+  <div class="logo">baitun<em>.</em>crm</div>
+  <div class="sync-info">
+    <div class="dot" id="statusDot"></div>
+    <span id="syncTime">Подключение...</span>
+    <button onclick="doLogout()" title="Выйти" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 8px;margin-left:8px;border-radius:6px;transition:.2s" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">⏻ Выйти</button>
+  </div>
+</div>
+<div class="filterbar">
+  <label>Период:</label>
+  <select id="filterPeriod" onchange="document.getElementById('filterYear').value='';onPeriodChange()">
+    <option value="all">Все время</option>
+    <option value="today">Сегодня</option>
+    <option value="week">Эта неделя</option>
+    <option value="month" selected>Этот месяц</option>
+    <option value="quarter">Квартал</option>
+    <option value="year">Этот год</option>
+    <option value="custom">Произвольный</option>
+  </select>
+  <div id="customDatesWrap" style="display:none;align-items:center;gap:6px">
+    <input type="date" id="dateFrom" onchange="applyFilters()" style="height:32px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:0 8px;border-radius:6px">
+    <span style="color:var(--muted);font-size:12px">—</span>
+    <input type="date" id="dateTo" onchange="applyFilters()" style="height:32px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:0 8px;border-radius:6px">
+  </div>
+  <select id="filterYear" onchange="document.getElementById('filterPeriod').value='all';applyFilters()">
+    <option value="">Все годы</option>
+    <option value="2026">2026</option>
+    <option value="2025">2025</option>
+    <option value="2024">2024</option>
+    <option value="2023">2023</option>
+    <option value="2022">2022</option>
+  </select>
+  <select id="filterSource" onchange="applyFilters()">
+    <option value="">Все источники</option>
+    <option value="FACEBOOK">Facebook</option>
+    <option value="INSTAGRAM">Instagram</option>
+    <option value="TIKTOK">TikTok</option>
+    <option value="WEB">Сайт</option>
+    <option value="CALL">Звонок</option>
+    <option value="RECOMMENDATION">Рекомендация</option>
+    <option value="OTHER">Другое</option>
+  </select>
+  <select id="filterDept" onchange="applyDeptFilter()" style="border-color:var(--accent);color:var(--accent)">
+    <option value="sales">📊 Отдел продаж</option>
+    <option value="all">Все сотрудники</option>
+  </select>
+  <div style="position:relative">
+    <button class="btn" onclick="toggleDropdown('mgrDropdown')" style="height:32px;min-width:150px;text-align:left" id="mgrBtn">Все менеджеры ▾</button>
+    <div id="mgrDropdown" style="display:none;position:absolute;top:36px;left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;z-index:100;min-width:200px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <div style="padding:4px 8px;margin-bottom:4px;display:flex;gap:8px">
+        <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllMgr(true)">Все</button>
+        <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllMgr(false)">Сбросить</button>
+      </div>
+      <div id="mgrList"></div>
+    </div>
+  </div>
+  <button class="btn primary" onclick="loadData()">↻ Обновить</button>
+  <button class="btn" id="syncBtnMain" onclick="runSync()" style="background:rgba(0,200,150,.15);border-color:rgba(0,200,150,.4);color:#00c896">⚡ Синхронизировать</button>
+</div>
+
+<div id="loadingView" class="loading">
+  <div class="spinner"></div>
+  <div id="loadingText">Загрузка данных из Bitrix24...</div>
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-text" id="progressText">Загрузка лидов...</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  </div>
+</div>
+<div id="errorView" style="display:none"></div>
+<div id="mainContent" class="content" style="display:none">
+  <div class="kpi-grid">
+    <div class="kpi green"><div class="kpi-icon">📥</div><div class="kpi-val" id="kLeads">—</div><div class="kpi-label">Лидов</div><div class="kpi-sub" id="kLeadsSub"></div></div>
+    <div class="kpi blue"><div class="kpi-icon">🤝</div><div class="kpi-val" id="kDeals">—</div><div class="kpi-label">Сделок</div><div class="kpi-sub" id="kDealsSub"></div></div>
+    <div class="kpi orange"><div class="kpi-icon">💰</div><div class="kpi-val" id="kAmount">—</div><div class="kpi-label">Сумма сделок</div><div class="kpi-sub" id="kAmountSub" class="kpi-sub up"></div></div>
+    <div class="kpi green"><div class="kpi-icon">🏆</div><div class="kpi-val" id="kWon">—</div><div class="kpi-label">Выиграно</div><div class="kpi-sub" id="kWonSub" class="kpi-sub up"></div></div>
+    <div class="kpi red"><div class="kpi-icon">❌</div><div class="kpi-val" id="kLost">—</div><div class="kpi-label">Проиграно</div><div class="kpi-sub" id="kLostSub"></div></div>
+    <div class="kpi pink"><div class="kpi-icon">📊</div><div class="kpi-val" id="kConv">—</div><div class="kpi-label">Конверсия</div><div class="kpi-sub" id="kConvSub"></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-box full">
+      <div class="box-title">Лиды и сделки по месяцам</div>
+      <div class="box-sub" id="timelineSubtitle">Динамика за последние 12 месяцев</div>
+      <div class="legend">
+        <div class="legend-item"><div class="ldot" style="background:#00c896"></div>Лиды</div>
+        <div class="legend-item"><div class="ldot" style="background:#4f8ef7"></div>Сделки</div>
+        <div class="legend-item"><div class="ldot" style="background:#f7934f"></div>Выиграно</div>
+      </div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="chartTimeline"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="box-title">Источники лидов</div>
+      <div class="box-sub">По каналам привлечения</div>
+      <div style="position:relative;width:100%;height:180px"><canvas id="chartSources"></canvas></div>
+      <div class="legend" id="sourceLegend" style="margin-top:10px;margin-bottom:0"></div>
+    </div>
+    <div class="chart-box">
+      <div class="box-title">Воронка сделок</div>
+      <div class="box-sub">По стадиям CRM</div>
+      <div class="funnel" id="funnelChart"></div>
+    </div>
+  </div>
+  <div class="charts-row" style="margin-bottom:16px">
+    <div class="chart-box">
+      <div class="box-title">Рейтинг менеджеров</div>
+      <div class="box-sub">По количеству лидов</div>
+      <div id="managerList"></div>
+    </div>
+    <div class="chart-box">
+      <div class="box-title">Статусы лидов</div>
+      <div class="box-sub">Текущее распределение</div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="chartLeadStatus"></canvas></div>
+    </div>
+  </div>
+  <div class="table-box">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div><div class="box-title">Последние записи</div><div class="box-sub" style="margin-bottom:0">Реальные данные из Bitrix24</div></div>
+        <button class="btn" onclick="toggleTable()" id="toggleTableBtn" style="font-size:12px;padding:4px 12px;height:28px">Скрыть ▲</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'leads')">Лиды</button>
+        <button class="tab" onclick="switchTab(this,'deals')">Сделки</button>
+      </div>
+    </div>
+    <div id="tableWrap"><div class="tbl-wrap"><div id="tableContent"></div></div></div>
+  </div>
+</div>
+
+  <!-- FUNNELS SECTION -->
+  <div class="table-box" style="margin-bottom:20px" id="funnelsSection">
+    <div class="table-header">
+      <div><div class="box-title">🏗️ Производственные воронки</div><div class="box-sub" style="margin-bottom:0">Сделки по воронкам · Bitrix24</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="tab active" onclick="switchFunnelView(this,'kanban')">Канбан</button>
+        <button class="tab" onclick="switchFunnelView(this,'table')">Таблица</button>
+        <button class="tab" onclick="switchFunnelView(this,'summary')">Итоги</button>
+      </div>
+    </div>
+
+    <!-- Funnel tabs -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="tab active" id="fTab31" onclick="switchFunnel(31)">📐 Комплексные</button>
+      <button class="tab" id="fTab41" onclick="switchFunnel(41)">✏️ Эскизные</button>
+      <button class="tab" id="fTab3" onclick="switchFunnel(3)">🎨 Дизайн интерьера</button>
+      <button class="tab" id="fTab9" onclick="switchFunnel(9)">📋 Рабочий проект</button>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:16px">
+      <div class="kpi green"><div class="kpi-icon">📁</div><div class="kpi-val" id="fKpiTotal">—</div><div class="kpi-label">Всего сделок</div></div>
+      <div class="kpi blue"><div class="kpi-icon">⚙️</div><div class="kpi-val" id="fKpiActive">—</div><div class="kpi-label">В работе</div></div>
+      <div class="kpi orange"><div class="kpi-icon">💰</div><div class="kpi-val" id="fKpiAmount">—</div><div class="kpi-label">Сумма</div></div>
+      <div class="kpi green"><div class="kpi-icon">🏆</div><div class="kpi-val" id="fKpiWon">—</div><div class="kpi-label">Выиграно</div></div>
+      <div class="kpi red"><div class="kpi-icon">❌</div><div class="kpi-val" id="fKpiLost">—</div><div class="kpi-label">Провалено</div></div>
+      <div class="kpi pink"><div class="kpi-icon">⏸️</div><div class="kpi-val" id="fKpiDeferred">—</div><div class="kpi-label">Отложено</div></div>
+    </div>
+
+    <div id="funnelContent"></div>
+  </div>
+
+  <!-- ATTRIBUTION SECTION -->
+  <div class="table-box" style="margin-bottom:20px">
+    <div class="table-header">
+      <div><div class="box-title">🎯 Атрибуция лидов</div><div class="box-sub" style="margin-bottom:0">Источник → Кампания → Конверсия в сделку</div></div>
+    </div>
+    <div class="charts-row" style="margin-bottom:0">
+      <div class="chart-box">
+        <div class="box-title">Лиды по источникам</div>
+        <div class="box-sub">С UTM-разметкой</div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="attrSourceChart"></canvas></div>
+        <div class="legend" id="attrSourceLegend" style="margin-top:10px;margin-bottom:0"></div>
+      </div>
+      <div class="chart-box">
+        <div class="box-title">Топ кампании</div>
+        <div class="box-sub">По количеству лидов</div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="attrCampChart"></canvas></div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="box-title" style="margin-bottom:10px">Конверсия по источникам</div>
+      <div id="attrConvTable"></div>
+    </div>
+  </div>
+
+  <!-- FACEBOOK SECTION -->
+  <div class="table-box" id="fbSection" style="margin-bottom:20px">
+    <div class="table-header">
+      <div><div class="box-title">📘 Facebook Ads</div><div class="box-sub" style="margin-bottom:0">Baitun Commercial + Krot BaitunProject</div></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchFbTab(this,'campaigns')">Кампании</button>
+        <button class="tab" onclick="switchFbTab(this,'daily')">По дням</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Период FB:</label>
+      <select id="fbPeriod" onchange="reloadFacebook()" style="height:32px">
+        <option value="last_7d">7 дней</option>
+        <option value="last_30d" selected>30 дней</option>
+        <option value="last_90d">90 дней</option>
+        <option value="this_month">Этот месяц</option>
+        <option value="last_month">Прошлый месяц</option>
+        <option value="this_quarter">Этот квартал</option>
+        <option value="this_year">Этот год</option>
+        <option value="custom">Произвольный</option>
+      </select>
+      <div id="fbCustomDates" style="display:none;gap:8px;align-items:center">
+        <input type="date" id="fbDateFrom" onchange="reloadFacebook()" style="height:32px">
+        <span style="color:var(--muted);font-size:12px">—</span>
+        <input type="date" id="fbDateTo" onchange="reloadFacebook()" style="height:32px">
+      </div>
+      <div style="position:relative">
+        <button class="btn" onclick="toggleDropdown('fbAccDropdown')" style="height:32px;min-width:160px;text-align:left" id="fbAccBtn">Аккаунты (2) ▾</button>
+        <div id="fbAccDropdown" style="display:none;position:absolute;top:36px;left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;z-index:100;min-width:220px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+          <div style="padding:4px 8px;margin-bottom:4px;display:flex;gap:8px">
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllFbAcc(true)">Все</button>
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllFbAcc(false)">Сбросить</button>
+          </div>
+          <div id="fbAccList"></div>
+        </div>
+      </div>
+      <button class="btn primary" onclick="reloadFacebook()" style="height:32px">↻ Обновить</button>
+      <div style="position:relative">
+        <button class="btn" onclick="toggleDropdown('campDropdown')" style="height:32px;min-width:150px;text-align:left" id="campBtn">Все кампании ▾</button>
+        <div id="campDropdown" style="display:none;position:absolute;top:36px;left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;z-index:100;min-width:260px;max-height:300px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+          <div style="padding:4px 8px;margin-bottom:4px;display:flex;gap:8px">
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllCamp(true)">Все</button>
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="selectAllCamp(false)">Сбросить</button>
+          </div>
+          <div id="campList"><div style="color:var(--muted);font-size:12px;padding:8px">Загрузи данные сначала</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px">
+      <div class="kpi blue"><div class="kpi-icon">💸</div><div class="kpi-val" id="fbSpend">—</div><div class="kpi-label">Расход ($)</div></div>
+      <div class="kpi green"><div class="kpi-icon">👁</div><div class="kpi-val" id="fbReach">—</div><div class="kpi-label">Охват</div></div>
+      <div class="kpi orange"><div class="kpi-icon">🖱</div><div class="kpi-val" id="fbClicks">—</div><div class="kpi-label">Клики</div></div>
+      <div class="kpi pink"><div class="kpi-icon">📋</div><div class="kpi-val" id="fbLeads">—</div><div class="kpi-label">Лиды (FB)</div></div>
+      <div class="kpi green"><div class="kpi-icon">📊</div><div class="kpi-val" id="fbCtr">—</div><div class="kpi-label">CTR</div></div>
+      <div class="kpi orange"><div class="kpi-icon">🎯</div><div class="kpi-val" id="fbCpl">—</div><div class="kpi-label">Цена лида ($)</div></div>
+    </div>
+    <div style="position:relative;width:100%;height:180px;margin-bottom:16px"><canvas id="fbDailyChart"></canvas></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:var(--text)">Список кампаний</div>
+      <button class="btn" onclick="toggleFbTable()" id="toggleFbBtn" style="font-size:12px;padding:4px 12px;height:28px">Скрыть ▲</button>
+    </div>
+    <div id="fbTableWrap"><div class="tbl-wrap"><div id="fbTableContent"></div></div></div>
+  </div>
+
+  <!-- GA4 SECTION -->
+  <div class="table-box" style="margin-bottom:20px">
+    <div class="table-header">
+      <div><div class="box-title">🌐 Трафик сайтов</div><div class="box-sub" style="margin-bottom:0">baitun.kz + baitunproject.kz · Google Analytics 4</div></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchGaTab(this,'baitun')">baitun.kz</button>
+        <button class="tab" onclick="switchGaTab(this,'baitunproject')">baitunproject.kz</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Период:</label>
+      <select id="gaPeriod" onchange="loadGA4()" style="height:32px">
+        <option value="7daysAgo">7 дней</option>
+        <option value="30daysAgo" selected>30 дней</option>
+        <option value="90daysAgo">90 дней</option>
+        <option value="365daysAgo">Год</option>
+      </select>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px">
+      <div class="kpi blue"><div class="kpi-icon">👥</div><div class="kpi-val" id="gaSessions">—</div><div class="kpi-label">Сессии</div></div>
+      <div class="kpi green"><div class="kpi-icon">🧑</div><div class="kpi-val" id="gaUsers">—</div><div class="kpi-label">Пользователи</div></div>
+      <div class="kpi orange"><div class="kpi-icon">🆕</div><div class="kpi-val" id="gaNewUsers">—</div><div class="kpi-label">Новые</div></div>
+      <div class="kpi pink"><div class="kpi-icon">📈</div><div class="kpi-val" id="gaConversions">—</div><div class="kpi-label">Конверсии</div></div>
+      <div class="kpi red"><div class="kpi-icon">↩️</div><div class="kpi-val" id="gaBounce">—</div><div class="kpi-label">Отказы</div></div>
+      <div class="kpi blue"><div class="kpi-icon">⏱</div><div class="kpi-val" id="gaDuration">—</div><div class="kpi-label">Время на сайте</div></div>
+    </div>
+    <div class="charts-row" style="margin-bottom:14px">
+      <div class="chart-box full">
+        <div class="box-title">Сессии по дням</div>
+        <div class="box-sub">Динамика трафика</div>
+        <div style="position:relative;width:100%;height:180px"><canvas id="gaTimelineChart"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-row" style="margin-bottom:0">
+      <div class="chart-box">
+        <div class="box-title">Источники трафика</div>
+        <div class="box-sub">Откуда приходят пользователи</div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="gaSourceChart"></canvas></div>
+        <div class="legend" id="gaSourceLegend" style="margin-top:10px;margin-bottom:0"></div>
+      </div>
+      <div class="chart-box">
+        <div class="box-title">Органика vs Реклама</div>
+        <div class="box-sub">Реальные vs платные визиты</div>
+        <div id="gaChannelTable" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIKTOK SECTION -->
+  <div class="table-box" id="ttSection" style="margin-bottom:20px">
+    <div class="table-header">
+      <div><div class="box-title">🎵 TikTok Ads</div><div class="box-sub" style="margin-bottom:0" id="ttSubtitle">Подключите TikTok Ads API для статистики</div></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTtTab(this,'campaigns')">Кампании</button>
+        <button class="tab" onclick="switchTtTab(this,'leads')">Лиды из CRM</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Период:</label>
+      <select id="ttPeriod" onchange="renderTtTab()" style="height:32px">
+        <option value="7">7 дней</option>
+        <option value="30" selected>30 дней</option>
+        <option value="90">90 дней</option>
+        <option value="365">Весь год</option>
+      </select>
+      <div id="ttTokenWrap" style="display:flex;align-items:center;gap:8px">
+        <button class="btn primary" onclick="loadTikTok()" style="height:32px">↻ Обновить</button>
+      </div>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px">
+      <div class="kpi blue"><div class="kpi-icon">💸</div><div class="kpi-val" id="ttSpend">—</div><div class="kpi-label">Расход ($)</div></div>
+      <div class="kpi green"><div class="kpi-icon">👁</div><div class="kpi-val" id="ttReach">—</div><div class="kpi-label">Показы</div></div>
+      <div class="kpi orange"><div class="kpi-icon">🖱</div><div class="kpi-val" id="ttClicks">—</div><div class="kpi-label">Клики</div></div>
+      <div class="kpi pink"><div class="kpi-icon">📋</div><div class="kpi-val" id="ttLeads">—</div><div class="kpi-label">Лиды (CRM)</div></div>
+      <div class="kpi green"><div class="kpi-icon">📊</div><div class="kpi-val" id="ttCtr">—</div><div class="kpi-label">CTR</div></div>
+      <div class="kpi orange"><div class="kpi-icon">🎯</div><div class="kpi-val" id="ttCpl">—</div><div class="kpi-label">Цена лида ($)</div></div>
+    </div>
+    <div style="position:relative;width:100%;height:180px;margin-bottom:16px"><canvas id="ttDailyChart"></canvas></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:var(--text)" id="ttTableTitle">Лиды TikTok из Bitrix24</div>
+      <button class="btn" onclick="toggleTtTable()" id="toggleTtBtn" style="font-size:12px;padding:4px 12px;height:28px">Скрыть ▲</button>
+    </div>
+    <div id="ttTableWrap"><div class="tbl-wrap"><div id="ttTableContent"></div></div></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// Используем Vercel proxy — запросы идут через /bitrix/ на наш же домен
+// Vercel proxy для Bitrix
+const PROXY = '/bitrix/';
+const SUPABASE_URL = 'https://fjvqqnrmqdnlfjnxhfzr.supabase.co';
+// SUPABASE_KEY намеренно убран из фронтенда — все запросы через /api/*
+let useSupabase = false;
+// FB_TOKEN убран из фронтенда — запросы через /api/fb
+const FB_ACCOUNTS = [
+  { id: 'act_995860210835922',   name: 'Baitun Pro' },
+  { id: 'act_3979805452007105',  name: 'Projectshop.kz' },
+  { id: 'act_4146358882060537',  name: 'Baitun Interior' },
+  { id: 'act_372779847772118',   name: 'Beren Zharylkassym' },
+  { id: 'act_2108600572640840',  name: 'BaitunPro' },
+  { id: 'act_760612029604147',   name: 'Krot BaitunProject' },
+  { id: 'act_1054616746152169',  name: 'Baitun Commercial' },
+  { id: 'act_360885540453266',   name: 'Krot Baitun 3' },
+  { id: 'act_1435677850801838',  name: 'Krot Baitun 4 Almaty' },
+  { id: 'act_2685853852173568',  name: 'Krot Baitun 5' }
+];
+let selectedFbAccounts = new Set(['act_1054616746152169','act_760612029604147']);
+let fbData = { spend: 0, impressions: 0, clicks: 0, reach: 0, leads: 0, cpl: 0, campaigns: [], byDay: [] };
+
+let allLeads = [], allDeals = [], allUsers = {};
+let currentTab = 'leads';
+let chartTimeline, chartSources, chartLeadStatus;
+
+const SOURCE_MAP = {
+  'FACEBOOK':'Facebook','FB':'Facebook','22':'Facebook',
+  'INSTAGRAM':'Instagram','IG':'Instagram',
+  'TIKTOK':'TikTok','23':'TikTok',
+  'WEB':'Сайт','CALL':'Звонок','PHONE':'Звонок',
+  'EMAIL':'Email','PARTNER':'Партнер','RECOMMENDATION':'Рекомендация',
+  'ADVERTISING':'Реклама','SELF':'Самостоятельно','STORE':'Магазин',
+  'TRADE_SHOW':'Выставка','FACE_TRACKER':'Виджет','1|OPENLINE':'Открытая линия',
+  'OTHER':'Другое','':"Не указан"
+};
+
+// Определяем источник по UTM и SOURCE_ID
+function detectSource(lead) {
+  const utm = (lead.UTM_SOURCE || '').toLowerCase();
+  const src = (lead.SOURCE_ID || '');
+  const srcUp = src.toUpperCase();
+  const title = (lead.TITLE || '').toLowerCase();
+
+  // WhatsApp прямой (SOURCE_ID начинается с WZ)
+  if (src.startsWith('WZ')) return 'WhatsApp';
+
+  // PARTNER — пришёл через WhatsApp но с рекламы
+  if (srcUp === 'PARTNER') {
+    if (utm === 'wn_facebook') return 'WhatsApp → Facebook';
+    if (utm === 'wn_tiktok')   return 'WhatsApp → TikTok';
+    if (utm === 'wn_google')   return 'WhatsApp → Google';
+    return 'WhatsApp → Другое';
+  }
+
+  // Facebook Lead Ads (SOURCE_ID=22)
+  if (src === '22' || utm === 'facebook' || title.includes('facebook lead')) return 'Facebook';
+
+  // TikTok Lead Ads (SOURCE_ID=23)
+  if (src === '23' || utm === 'tiktok' || title.includes('tiktok lead')) return 'TikTok';
+
+  // Сайт с UTM
+  if (srcUp === 'WEB') {
+    if (utm === 'wn_facebook') return 'Сайт → Facebook';
+    if (utm === 'wn_tiktok')   return 'Сайт → TikTok';
+    if (utm === 'wn_google')   return 'Сайт → Google';
+    return 'Сайт';
+  }
+
+  if (srcUp === 'CALL') return 'Звонок';
+  if (srcUp === 'RECOMMENDATION') return 'Рекомендация';
+  if (srcUp === 'ADVERTISING' || utm.includes('google')) return 'Google';
+  if (srcUp === '1|OPENLINE') return 'Открытая линия';
+
+  return SOURCE_MAP[srcUp] || SOURCE_MAP[src] || 'Другое';
+}
+
+function detectCampaign(lead) {
+  if (lead.UTM_CAMPAIGN) return lead.UTM_CAMPAIGN;
+  // extract from title e.g. "Facebook Lead / BaitunProject Almaty"
+  const title = lead.TITLE || '';
+  const match = title.match(/(?:Facebook Lead|TikTok Lead)[^/]*\/\s*(.+)/i);
+  if (match) return match[1].trim();
+  return '—';
+}
+const SOURCE_COLORS = {
+  'Facebook':'#4f8ef7',
+  'TikTok':'#c084fc',
+  'WhatsApp':'#25d366',
+  'WhatsApp → Facebook':'#1da850',
+  'WhatsApp → TikTok':'#17a84a',
+  'WhatsApp → Google':'#0fa844',
+  'WhatsApp → Другое':'#0d9e40',
+  'Сайт':'#00c896',
+  'Сайт → Facebook':'#00a07a',
+  'Сайт → TikTok':'#008060',
+  'Сайт → Google':'#006048',
+  'Звонок':'#f7934f',
+  'Google':'#4285f4',
+  'Instagram':'#e45c8a',
+  'Рекомендация':'#5cdce4',
+  'Открытая линия':'#34d399',
+  'Email':'#9b8ef7',
+  'Партнер':'#f7d34f',
+  'Другое':'#7b82a0',
+  'Не указан':'#555'
+};
+const LEAD_STATUS = {
+  'NEW':'Новый','IN_PROCESS':'В работе','PROCESSED':'Обработан',
+  'CONVERTED':'Конвертирован','JUNK':'Некачественный','FALSE':'Ложный'
+};
+const STATUS_COLORS = {
+  'NEW':'#4f8ef7','IN_PROCESS':'#00c896','PROCESSED':'#f7934f',
+  'CONVERTED':'#00c896','JUNK':'#7b82a0','FALSE':'#e45c5c'
+};
+
+function setProgress(text, pct) {
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+async function bx(method, params = {}) {
+  const url = new URL(PROXY + method + '.json', window.location.origin);
+  Object.entries(params).forEach(([k, v]) => {
+    if (Array.isArray(v)) v.forEach(i => url.searchParams.append(k + '[]', i));
+    else if (typeof v === 'object' && v !== null) Object.entries(v).forEach(([k2, v2]) => url.searchParams.append(k + '[' + k2 + ']', v2));
+    else url.searchParams.append(k, String(v));
+  });
+  const r = await fetch(url.toString());
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error_description || d.error);
+  return d || {};
+}
+
+async function fetchAll(method, params = {}, onProgress) {
+  let all = [], start = 0, total = null;
+  try {
+    while (true) {
+      const r = await bx(method, { ...params, start, limit: 50 });
+      if (!r || !r.result) break;
+      all = all.concat(r.result);
+      if (total === null) total = r.total || 0;
+      if (onProgress && total) onProgress(Math.min(all.length, total), total);
+      if (!r.next || all.length >= total) break;
+      start = r.next;
+      if (all.length > 5000) break;
+    }
+  } catch(e) { console.warn('fetchAll error:', method, e); }
+  return all;
+}
+
+// Отдел продаж: 255 (главный), 67 (Шымкент), 243 (Алматы)
+const SALES_DEPT_IDS = ['255', '67', '243'];
+let salesUserIds = new Set();
+
+async function loadDepartments() {
+  // ID уже известны, ничего не делаем
+  return Promise.resolve();
+}
+
+async function loadUsers() {
+  try {
+    // Загружаем сотрудников отдела продаж по всем трём отделам
+    for (const deptId of SALES_DEPT_IDS) {
+      try {
+        let start = 0;
+        while (true) {
+          const r = await bx('user.get', { limit: 50, start, UF_DEPARTMENT: deptId });
+          if (!r || !r.result) break;
+          r.result.forEach(u => {
+            allUsers[u.ID] = ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim();
+            salesUserIds.add(u.ID);
+          });
+          if (!r.next) break;
+          start = r.next;
+        }
+      } catch(e) { console.warn('dept users error:', deptId, e); }
+    }
+    // Также загружаем всех остальных пользователей для имён в таблице
+    try {
+      let start = 0;
+      while (true) {
+        const r = await bx('user.get', { limit: 50, start });
+        if (!r || !r.result) break;
+        r.result.forEach(u => {
+          if (!allUsers[u.ID]) allUsers[u.ID] = ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim();
+        });
+        if (!r.next) break;
+        start = r.next;
+      }
+    } catch(e) { console.warn('all users error:', e); }
+    fillManagerFilter();
+  } catch (e) { console.warn('users:', e); }
+}
+
+async function fbGet(path) {
+  if (!authToken) throw new Error('Не авторизован — войдите в систему');
+  const r = await fetch('/api/fb?path=' + encodeURIComponent(path), {
+    headers: getAuthHeaders()
+  });
+  if (r.status === 401) {
+    doLogout();
+    throw new Error('Сессия истекла — войдите снова');
+  }
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message || d.error);
+  return d;
+}
+
+function getFbDateParams() {
+  const period = document.getElementById('fbPeriod').value;
+  if (period === 'custom') {
+    const from = document.getElementById('fbDateFrom').value;
+    const to = document.getElementById('fbDateTo').value;
+    if (from && to) return `time_range={"since":"${from}","until":"${to}"}`;
+    return 'date_preset=last_30d';
+  }
+  return `date_preset=${period}`;
+}
+
+function reloadFacebook() {
+  const period = document.getElementById('fbPeriod').value;
+  document.getElementById('fbCustomDates').style.display = period === 'custom' ? 'flex' : 'none';
+  loadFacebook();
+}
+
+async function loadFacebook() {
+  if (!authToken) return; // не запускать до логина
+  try {
+    document.getElementById('fbSpend').textContent = '...';
+    let totalSpend=0, totalReach=0, totalClicks=0, totalLeads=0, totalImpr=0;
+    let allCampaigns=[], allDaily={};
+
+    const dateParams = getFbDateParams();
+    const accounts = selectedFbAccounts.size > 0 ? FB_ACCOUNTS.filter(a => selectedFbAccounts.has(a.id)) : FB_ACCOUNTS;
+
+    for (const acc of accounts) {
+      // Account insights
+      const ins = await fbGet(`${acc.id}/insights?fields=spend,reach,impressions,clicks,actions&${dateParams}&level=account`);
+      const d = ins.data?.[0] || {};
+      totalSpend   += parseFloat(d.spend||0);
+      totalReach   += parseInt(d.reach||0);
+      totalClicks  += parseInt(d.clicks||0);
+      totalImpr    += parseInt(d.impressions||0);
+      const leadAct = (d.actions||[]).find(a=>a.action_type==='lead');
+      totalLeads   += parseInt(leadAct?.value||0);
+
+      // Campaigns
+      try {
+        const camps = await fbGet(`${acc.id}/campaigns?fields=name,status,insights{spend,reach,clicks,impressions,actions}&${dateParams}&limit=20`);
+        (camps.data||[]).forEach(c => {
+          const ci = c.insights?.data?.[0] || {};
+          const cLeads = (ci.actions||[]).find(a=>a.action_type==='lead');
+          allCampaigns.push({
+            account: acc.name,
+            name: c.name,
+            status: c.status,
+            spend: parseFloat(ci.spend||0),
+            reach: parseInt(ci.reach||0),
+            clicks: parseInt(ci.clicks||0),
+            leads: parseInt(cLeads?.value||0)
+          });
+        });
+      } catch(e) {}
+
+      // Daily breakdown
+      try {
+        const daily = await fbGet(`${acc.id}/insights?fields=spend,reach,clicks,impressions&${dateParams}&time_increment=1&limit=90`);
+        (daily.data||[]).forEach(d => {
+          if (!allDaily[d.date_start]) allDaily[d.date_start] = {spend:0,reach:0,clicks:0};
+          allDaily[d.date_start].spend   += parseFloat(d.spend||0);
+          allDaily[d.date_start].reach   += parseInt(d.reach||0);
+          allDaily[d.date_start].clicks  += parseInt(d.clicks||0);
+        });
+      } catch(e) {}
+    }
+
+    const ctr = totalImpr > 0 ? (totalClicks/totalImpr*100).toFixed(2) : 0;
+    const cpl = totalLeads > 0 ? (totalSpend/totalLeads).toFixed(2) : 0;
+
+    document.getElementById('fbSpend').textContent   = '$' + totalSpend.toFixed(0);
+    document.getElementById('fbReach').textContent   = fmtM(totalReach);
+    document.getElementById('fbClicks').textContent  = fmtM(totalClicks);
+    document.getElementById('fbLeads').textContent   = totalLeads || '—';
+    document.getElementById('fbCtr').textContent     = ctr + '%';
+    document.getElementById('fbCpl').textContent     = cpl > 0 ? '$' + cpl : '—';
+
+    fbData = { spend: totalSpend, reach: totalReach, clicks: totalClicks, leads: totalLeads, ctr, cpl, campaigns: allCampaigns, byDay: allDaily };
+    updateCampFilter(allCampaigns);
+    renderFbTable('campaigns');
+    renderFbDailyChart();
+
+  } catch(e) {
+    console.error('FB error:', e);
+    document.getElementById('fbSpend').textContent = 'Ошибка';
+    document.getElementById('fbSection').querySelector('.box-sub').textContent = '⚠️ ' + e.message;
+  }
+}
+
+function initFbAccList() {
+  const list = document.getElementById('fbAccList');
+  if (!list) return;
+  list.innerHTML = FB_ACCOUNTS.map(a => `
+    <label class="multicheck-item">
+      <input type="checkbox" value="${a.id}" ${selectedFbAccounts.has(a.id)?'checked':''} onchange="onFbAccChange(this)">
+      ${a.name}
+    </label>`).join('');
+  updateFbAccBtn();
+}
+
+function onFbAccChange(el) {
+  if (el.checked) selectedFbAccounts.add(el.value);
+  else selectedFbAccounts.delete(el.value);
+  updateFbAccBtn();
+}
+
+function selectAllFbAcc(all) {
+  document.querySelectorAll('#fbAccList input').forEach(cb => {
+    cb.checked = all;
+    if (all) selectedFbAccounts.add(cb.value);
+    else selectedFbAccounts.delete(cb.value);
+  });
+  updateFbAccBtn();
+}
+
+function updateFbAccBtn() {
+  const total = FB_ACCOUNTS.length;
+  const checked = document.querySelectorAll('#fbAccList input:checked').length;
+  const btn = document.getElementById('fbAccBtn');
+  if (!btn) return;
+  btn.textContent = checked === total ? 'Все аккаунты ▾' : checked === 0 ? 'Выбери аккаунт ▾' : `Аккаунты (${checked}) ▾`;
+}
+
+function toggleDropdown(id) {
+  const el = document.getElementById(id);
+  const isOpen = el.style.display !== 'none';
+  // close all
+  ['fbAccDropdown','mgrDropdown','campDropdown'].forEach(d => {
+    const dd = document.getElementById(d);
+    if (dd) dd.style.display = 'none';
+  });
+  if (!isOpen) el.style.display = 'block';
+}
+// close dropdowns on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id$="Dropdown"]') && !e.target.closest('.btn')) {
+    ['fbAccDropdown','mgrDropdown','campDropdown'].forEach(d => {
+      const dd = document.getElementById(d);
+      if (dd) dd.style.display = 'none';
+    });
+  }
+});
+
+let allCampaignNames = new Set();
+let selectedCampaigns = new Set();
+
+function updateCampFilter(campaigns) {
+  campaigns.forEach(c => allCampaignNames.add(c.name));
+  const list = document.getElementById('campList');
+  if (!list) return;
+  list.innerHTML = [...allCampaignNames].sort().map(name => `
+    <label class="multicheck-item">
+      <input type="checkbox" value="${name}" ${selectedCampaigns.size===0||selectedCampaigns.has(name)?'checked':''} onchange="onCampChange(this)">
+      <span style="font-size:12px;white-space:normal">${name}</span>
+    </label>`).join('');
+  updateCampBtn();
+}
+
+function onCampChange(el) {
+  if (el.checked) selectedCampaigns.add(el.value);
+  else selectedCampaigns.delete(el.value);
+  updateCampBtn();
+  renderFbTable(currentFbTab);
+}
+
+function selectAllCamp(all) {
+  document.querySelectorAll('#campList input').forEach(cb => {
+    cb.checked = all;
+    if (all) selectedCampaigns.delete(cb.value);
+    else selectedCampaigns.add(cb.value);
+  });
+  if (all) selectedCampaigns.clear();
+  updateCampBtn();
+  renderFbTable(currentFbTab);
+}
+
+function updateCampBtn() {
+  const total = document.querySelectorAll('#campList input').length;
+  const checked = document.querySelectorAll('#campList input:checked').length;
+  const btn = document.getElementById('campBtn');
+  if (!btn) return;
+  btn.textContent = checked === total || checked === 0 ? 'Все кампании ▾' : `Кампании (${checked}) ▾`;
+}
+
+let fbDailyChart;
+function renderFbDailyChart() {
+  const days = Object.keys(fbData.byDay).sort().slice(-30);
+  const spendData = days.map(d => fbData.byDay[d].spend.toFixed(0));
+  const clickData = days.map(d => fbData.byDay[d].clicks);
+  const labels = days.map(d => d.slice(5));
+  if (fbDailyChart) fbDailyChart.destroy();
+  fbDailyChart = new Chart(document.getElementById('fbDailyChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Расход $', data: spendData, backgroundColor:'rgba(79,142,247,0.7)', yAxisID:'y' },
+        { label:'Клики',    data: clickData, backgroundColor:'rgba(0,200,150,0.7)', yAxisID:'y2', type:'line', tension:.4 }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#7b82a0',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+        y:{ticks:{color:'#7b82a0',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:true,text:'$',color:'#7b82a0'}},
+        y2:{position:'right',ticks:{color:'#7b82a0',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'клики',color:'#7b82a0'}}
+      }
+    }
+  });
+}
+
+let attrSourceChart, attrCampChart;
+
+function renderAttribution(leads, deals) {
+  if (!leads || !deals) return;
+  // Map leads to sources
+  const srcStats = {};
+  (leads||[]).forEach(l => {
+    const s = detectSource(l);
+    if (!srcStats[s]) srcStats[s] = { leads: 0, converted: 0, deals: 0 };
+    srcStats[s].leads++;
+    if (l.STATUS_ID === 'CONVERTED') srcStats[s].converted++;
+  });
+
+  // Match deals back to leads by source
+  deals.forEach(d => {
+    const s = detectSource(d);
+    if (!srcStats[s]) srcStats[s] = { leads: 0, converted: 0, deals: 0 };
+    srcStats[s].deals++;
+  });
+
+  const sorted = Object.entries(srcStats).sort((a,b) => b[1].leads - a[1].leads);
+  const colors = sorted.map(([s]) => SOURCE_COLORS[s] || '#7b82a0');
+  const total = sorted.reduce((sum,[,v]) => sum + v.leads, 0);
+
+  // Source donut chart
+  if (attrSourceChart) attrSourceChart.destroy();
+  attrSourceChart = new Chart(document.getElementById('attrSourceChart'), {
+    type: 'doughnut',
+    data: { labels: sorted.map(e=>e[0]), datasets:[{ data: sorted.map(e=>e[1].leads), backgroundColor: colors, borderWidth:0 }] },
+    options: { responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} }
+  });
+  document.getElementById('attrSourceLegend').innerHTML = sorted.map(([s,v]) =>
+    `<div class="legend-item"><div class="ldot" style="background:${SOURCE_COLORS[s]||'#7b82a0'}"></div>${s} ${total?Math.round(v.leads/total*100):0}%</div>`
+  ).join('');
+
+  // Top campaigns bar chart
+  const campStats = {};
+  leads.forEach(l => {
+    const c = detectCampaign(l);
+    if (c !== '—') campStats[c] = (campStats[c]||0) + 1;
+  });
+  const topCamps = Object.entries(campStats).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if (attrCampChart) attrCampChart.destroy();
+  attrCampChart = new Chart(document.getElementById('attrCampChart'), {
+    type: 'bar',
+    data: {
+      labels: topCamps.map(([c]) => c.length > 20 ? c.slice(0,20)+'…' : c),
+      datasets:[{ data: topCamps.map(e=>e[1]), backgroundColor:'#4f8ef7', borderRadius:4 }]
+    },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+              y:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}}}
+    }
+  });
+
+  // Conversion table
+  const convRows = sorted.map(([s,v]) => {
+    const conv = v.leads > 0 ? Math.round(v.converted/v.leads*100) : 0;
+    return `<div style="display:grid;grid-template-columns:140px 1fr 80px 80px 80px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(42,47,66,.4)">
+      <div>${srcBadge({SOURCE_ID: s, UTM_SOURCE: s, TITLE: ''})}</div>
+      <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${conv}%;height:100%;background:${SOURCE_COLORS[s]||'#7b82a0'};border-radius:4px"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text);text-align:right">${v.leads} лидов</div>
+      <div style="font-size:12px;color:var(--accent);text-align:right">${v.converted} конв.</div>
+      <div style="font-size:12px;font-weight:600;text-align:right;color:${conv>20?'var(--accent)':conv>10?'var(--accent3)':'var(--danger)'}">${conv}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('attrConvTable').innerHTML = `
+    <div style="display:grid;grid-template-columns:140px 1fr 80px 80px 80px;gap:8px;padding:4px 0;margin-bottom:4px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase">Источник</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase">Конверсия</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;text-align:right">Лиды</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;text-align:right">Конверт.</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;text-align:right">%</div>
+    </div>${convRows}`;
+}
+
+function toggleFbTable() {
+  const wrap = document.getElementById('fbTableWrap');
+  const btn = document.getElementById('toggleFbBtn');
+  const hidden = wrap.style.display === 'none';
+  wrap.style.display = hidden ? 'block' : 'none';
+  btn.textContent = hidden ? 'Скрыть ▲' : 'Показать ▼';
+}
+
+let currentFbTab = 'campaigns';
+function switchFbTab(el, tab) {
+  currentFbTab = tab;
+  document.querySelectorAll('#fbSection .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderFbTable(tab);
+}
+
+function renderFbTable(tab) {
+  const el = document.getElementById('fbTableContent');
+  if (tab === 'campaigns') {
+    const rows = (selectedCampaigns.size > 0
+      ? fbData.campaigns.filter(c => selectedCampaigns.has(c.name))
+      : fbData.campaigns).sort((a,b)=>b.spend-a.spend);
+    if (!rows.length) { el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">Нет данных за 30 дней</div>'; return; }
+    el.innerHTML = `<table><thead><tr><th>Аккаунт</th><th>Кампания</th><th>Статус</th><th>Расход $</th><th>Охват</th><th>Клики</th><th>Лиды</th></tr></thead>
+    <tbody>${rows.map(c=>`<tr>
+      <td><span class="src s-fb">${c.account}</span></td>
+      <td style="max-width:200px;white-space:normal;font-size:12px">${c.name}</td>
+      <td><span class="badge ${c.status==='ACTIVE'?'b-won':'b-junk'}">${c.status==='ACTIVE'?'Активна':'Пауза'}</span></td>
+      <td>$${c.spend.toFixed(0)}</td>
+      <td>${fmtM(c.reach)}</td>
+      <td>${fmtM(c.clicks)}</td>
+      <td>${c.leads||'—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  } else {
+    const days = Object.keys(fbData.byDay).sort().reverse().slice(0,30);
+    el.innerHTML = `<table><thead><tr><th>Дата</th><th>Расход $</th><th>Охват</th><th>Клики</th></tr></thead>
+    <tbody>${days.map(d=>`<tr>
+      <td>${d}</td>
+      <td>$${fbData.byDay[d].spend.toFixed(0)}</td>
+      <td>${fmtM(fbData.byDay[d].reach)}</td>
+      <td>${fbData.byDay[d].clicks}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+}
+
+// ========== FUNNELS ==========
+const FUNNELS = {
+  31: {
+    name: 'Комплексные проекты',
+    color: '#4f8ef7',
+    stages: [
+      { id:'C31:NEW', name:'Сбор документов', color:'#39a8ef' },
+      { id:'C31:PREPARATION', name:'Назначение исполнителей', color:'#2fc6f6' },
+      { id:'C31:PREPAYMENT_INVOIC', name:'Разработка планировок', color:'#55d0e0' },
+      { id:'C31:UC_HLH2Y9', name:'План у ГАП', color:'#468ee5' },
+      { id:'C31:EXECUTING', name:'Планы с клиентом', color:'#47e4c2' },
+      { id:'C31:FINAL_INVOICE', name:'Визуализация', color:'#ffa900' },
+      { id:'C31:UC_A1XJW6', name:'Визуалы у ГАП', color:'#1eae43' },
+      { id:'C31:UC_TGJX9E', name:'Визуалы с клиентом', color:'#ace9fb' },
+      { id:'C31:UC_RU68D7', name:'Чертежи и чистовая визуализация', color:'#ace9fb' },
+      { id:'C31:UC_CS3TFT', name:'Компоновка', color:'#ace9fb' },
+      { id:'C31:UC_WVB3BF', name:'Согласование с архитектурой', color:'#47d1e2' },
+      { id:'C31:UC_3H99TQ', name:'Выдача и финальный счет', color:'#ace9fb' },
+      { id:'C31:UC_I4YOFE', name:'Отложено', color:'#888', deferred:true },
+      { id:'C31:WON', name:'Сделка успешна ✅', color:'#7BD500', won:true },
+      { id:'C31:LOSE', name:'Сделка провалена ❌', color:'#FF5752', lost:true },
+      { id:'C31:APOLOGY', name:'Анализ провала', color:'#FF5752', lost:true },
+    ]
+  },
+  41: {
+    name: 'Эскизные проекты',
+    color: '#00c896',
+    stages: [
+      { id:'C41:NEW', name:'Сбор документов', color:'#39a8ef' },
+      { id:'C41:PREPARATION', name:'Назначение исполнителей', color:'#2fc6f6' },
+      { id:'C41:PREPAYMENT_INVOIC', name:'Разработка планировок', color:'#55d0e0' },
+      { id:'C41:UC_9MXL6V', name:'План у ГАП', color:'#1eae43' },
+      { id:'C41:UC_Z7DGCZ', name:'Планы с клиентом', color:'#ace9fb' },
+      { id:'C41:UC_OAZXX4', name:'Визуализация', color:'#ace9fb' },
+      { id:'C41:UC_0M609P', name:'Визуалы у ГАП', color:'#468ee5' },
+      { id:'C41:EXECUTING', name:'Визуалы с клиентом', color:'#47e4c2' },
+      { id:'C41:FINAL_INVOICE', name:'Чертежи и чистовая визуализация', color:'#ffa900' },
+      { id:'C41:UC_O5ZR17', name:'Компоновка', color:'#ace9fb' },
+      { id:'C41:UC_KAQOYN', name:'Согласование с архитектурой', color:'#ace9fb' },
+      { id:'C41:UC_3OOTMV', name:'Выдача и финальный счет', color:'#ace9fb' },
+      { id:'C41:UC_HDV44Q', name:'Отложено', color:'#888', deferred:true },
+      { id:'C41:WON', name:'Сделка успешна ✅', color:'#7BD500', won:true },
+      { id:'C41:LOSE', name:'Сделка провалена ❌', color:'#FF5752', lost:true },
+      { id:'C41:APOLOGY', name:'Анализ провала', color:'#FF5752', lost:true },
+    ]
+  },
+  3: {
+    name: 'Дизайн интерьера',
+    color: '#e45c8a',
+    stages: [
+      { id:'C3:NEW', name:'Ожидание плана', color:'#39a8ef' },
+      { id:'C3:UC_TQD4OC', name:'Назначение исполнителей', color:'#ffab00' },
+      { id:'C3:PREPAYMENT_INVOICE', name:'Расстановка мебели', color:'#55d0e0' },
+      { id:'C3:UC_XLVCPN', name:'Согласование с заказчиком', color:'#ff5752' },
+      { id:'C3:EXECUTING', name:'Моделирование и визуализация', color:'#47e4c2' },
+      { id:'C3:UC_K8QWY0', name:'Согласование визуализации', color:'#468ee5' },
+      { id:'C3:UC_CMTHEG', name:'Разработка чертежей', color:'#00c4fb' },
+      { id:'C3:FINAL_INVOICE', name:'Финальный счёт', color:'#FFA900' },
+      { id:'C3:UC_SVBP3Q', name:'Отложено', color:'#888', deferred:true },
+      { id:'C3:WON', name:'Сделка успешна ✅', color:'#7BD500', won:true },
+      { id:'C3:LOSE', name:'Сделка провалена ❌', color:'#FF5752', lost:true },
+      { id:'C3:APOLOGY', name:'Анализ провала', color:'#FF5752', lost:true },
+    ]
+  },
+  9: {
+    name: 'Рабочий проект',
+    color: '#f7934f',
+    stages: [
+      { id:'C9:NEW', name:'Ожидание ЭП / Счет', color:'#bbecf1' },
+      { id:'C9:PREPAYMENT_INVOICE', name:'Разработка рабочего проекта', color:'#922091' },
+      { id:'C9:UC_500JJN', name:'Сметная документация', color:'#ffab00' },
+      { id:'C9:1', name:'Экспертиза', color:'#00c4fb' },
+      { id:'C9:UC_E6UNNI', name:'Распечатка альбомов', color:'#ffab00' },
+      { id:'C9:3', name:'Финальная оплата', color:'#75d900' },
+      { id:'C9:WON', name:'Сделка успешна ✅', color:'#7BD500', won:true },
+      { id:'C9:LOSE', name:'Сделка провалена ❌', color:'#FF5752', lost:true },
+    ]
+  }
+};
+
+// Поля исполнителей по воронкам
+const EXECUTOR_FIELDS = {
+  31: [ // Комплексные проекты
+    { field: 'UF_CRM_1629193916',    label: 'ГАП',          icon: '🏛️', multiple: false },
+    { field: 'UF_CRM_1664348197',    label: 'Визуализатор', icon: '🎨', multiple: true  },
+    { field: 'UF_CRM_1664348185',    label: 'Техник',       icon: '🔧', multiple: true  },
+    { field: 'UF_CRM_1664348549',    label: 'Компоновщик',  icon: '📐', multiple: false },
+  ],
+  41: [ // Эскизные проекты
+    { field: 'UF_CRM_1629193916',    label: 'ГАП',          icon: '🏛️', multiple: false },
+    { field: 'UF_CRM_1664348197',    label: 'Визуализатор', icon: '🎨', multiple: true  },
+    { field: 'UF_CRM_1664348185',    label: 'Техник',       icon: '🔧', multiple: true  },
+    { field: 'UF_CRM_1664348549',    label: 'Компоновщик',  icon: '📐', multiple: false },
+  ],
+  3: [ // Дизайн интерьера
+    { field: 'UF_CRM_1748253788',    label: 'Гл. дизайнер', icon: '🎭', multiple: false },
+    { field: 'UF_CRM_1717054953',    label: 'Дизайнер',     icon: '🖌️', multiple: false },
+    { field: 'UF_CRM_1664348197',    label: 'Визуализатор', icon: '🎨', multiple: true  },
+    { field: 'UF_CRM_CHERTEZHNIK',   label: 'Чертежник',    icon: '✏️', multiple: false },
+  ],
+  9: [ // Рабочий проект
+    { field: 'UF_CRM_6660371C64E62', label: 'ГИП',          icon: '👷', multiple: false },
+  ]
+};
+
+// Select fields to load from Bitrix for deals
+const DEAL_EXECUTOR_FIELDS = [
+  'UF_CRM_1629193916','UF_CRM_6391B123D8440','UF_CRM_1664348197',
+  'UF_CRM_1664348185','UF_CRM_1664348549','UF_CRM_CHERTEZHNIK',
+  'UF_CRM_1717054953','UF_CRM_1748253788','UF_CRM_6660371C64E62',
+  'UF_CRM_1717055049'
+];
+
+function getExecutorNames(deal, fields) {
+  if (!deal || !fields || !fields.length) return '';
+  return fields.map(ef => {
+    const val = deal[ef.field];
+    if (!val) return null;
+    const ids = Array.isArray(val) ? val : [val];
+    const names = ids.map(id => allUsers[id] || allUsers[String(id)]).filter(Boolean);
+    if (!names.length) return null;
+    return `<span style="font-size:10px;color:var(--muted)">${ef.icon} ${ef.label}: <span style="color:var(--text)">${names.join(', ')}</span></span>`;
+  }).filter(Boolean).join('<br>');
+}
+
+let currentFunnelId = 31;
+let currentFunnelView = 'kanban';
+let funnelDeals = {}; // cache by category
+
+function switchFunnel(id) {
+  currentFunnelId = id;
+  document.querySelectorAll('[id^="fTab"]').forEach(t => t.classList.remove('active'));
+  document.getElementById('fTab' + id)?.classList.add('active');
+  renderFunnel();
+}
+
+function switchFunnelView(el, view) {
+  currentFunnelView = view;
+  document.querySelectorAll('#funnelsSection .tab').forEach(t => {
+    if (t.getAttribute('onclick')?.includes('switchFunnelView')) t.classList.remove('active');
+  });
+  el.classList.add('active');
+  renderFunnel();
+}
+
+function getFunnelDeals(categoryId) {
+  if (!allDeals || !allDeals.length) return [];
+  return allDeals.filter(d => {
+    if (!d || !d.STAGE_ID) return false;
+    return d.STAGE_ID.startsWith('C' + categoryId + ':');
+  });
+}
+
+function renderFunnelKPIs(deals, funnel) {
+  const won = deals.filter(d => funnel.stages.find(s => s.id === d.STAGE_ID && s.won));
+  const lost = deals.filter(d => funnel.stages.find(s => s.id === d.STAGE_ID && s.lost));
+  const deferred = deals.filter(d => funnel.stages.find(s => s.id === d.STAGE_ID && s.deferred));
+  const active = deals.filter(d => {
+    const st = funnel.stages.find(s => s.id === d.STAGE_ID);
+    return st && !st.won && !st.lost && !st.deferred;
+  });
+  const totalAmt = deals.reduce((s,d) => s + Number(d.OPPORTUNITY||0), 0);
+
+  document.getElementById('fKpiTotal').textContent = fmt(deals.length);
+  document.getElementById('fKpiActive').textContent = fmt(active.length);
+  document.getElementById('fKpiAmount').textContent = fmtM(totalAmt) + ' ₸';
+  document.getElementById('fKpiWon').textContent = fmt(won.length);
+  document.getElementById('fKpiLost').textContent = fmt(lost.length);
+  document.getElementById('fKpiDeferred').textContent = fmt(deferred.length);
+}
+
+function renderFunnel() {
+  const funnel = FUNNELS[currentFunnelId];
+  const deals = getFunnelDeals(currentFunnelId);
+  renderFunnelKPIs(deals, funnel);
+
+  if (currentFunnelView === 'kanban') renderKanban(deals, funnel);
+  else if (currentFunnelView === 'table') renderFunnelTable(deals, funnel);
+  else renderFunnelSummary(deals, funnel);
+}
+
+function renderKanban(deals, funnel) {
+  // Only show stages with deals + key stages
+  const stageMap = {};
+  funnel.stages.forEach(s => { stageMap[s.id] = { ...s, deals: [] }; });
+  deals.forEach(d => { if (stageMap[d.STAGE_ID]) stageMap[d.STAGE_ID].deals.push(d); });
+
+  const activeStages = funnel.stages.filter(s => !s.lost && !s.won || stageMap[s.id]?.deals.length > 0);
+  const wonStage = funnel.stages.find(s => s.won);
+  const lostStage = funnel.stages.find(s => s.lost);
+
+  const el = document.getElementById('funnelContent');
+  el.innerHTML = `
+    <div style="overflow-x:auto;padding-bottom:8px">
+      <div style="display:flex;gap:10px;min-width:max-content;align-items:flex-start">
+        ${activeStages.map(s => {
+          const sd = stageMap[s.id]?.deals || [];
+          const amt = sd.reduce((sum,d) => sum + Number(d.OPPORTUNITY||0), 0);
+          return `<div style="min-width:200px;max-width:220px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);overflow:hidden">
+            <div style="padding:8px 10px;background:${s.color}22;border-bottom:2px solid ${s.color};display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px" title="${s.name}">${s.name}</span>
+              <span style="font-size:11px;background:${s.color};color:#000;border-radius:10px;padding:1px 7px;font-weight:600;flex-shrink:0">${sd.length}</span>
+            </div>
+            ${amt > 0 ? `<div style="padding:4px 10px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)">${fmtM(amt)} ₸</div>` : ''}
+            <div style="max-height:300px;overflow-y:auto;padding:6px">
+              ${sd.length === 0 ? '<div style="color:var(--muted);font-size:11px;padding:8px;text-align:center">Пусто</div>' :
+                sd.slice(0,10).map(d => `<div style="background:var(--surface);border-radius:5px;padding:7px 8px;margin-bottom:5px;border:1px solid var(--border)">
+                  <div style="font-size:11px;color:var(--text);margin-bottom:3px;line-height:1.3">${d.TITLE||'—'}</div>
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:10px;color:var(--muted)">${new Date(d.DATE_CREATE).toLocaleDateString('ru')}</span>
+                    ${d.OPPORTUNITY && Number(d.OPPORTUNITY)>0 ? `<span style="font-size:10px;color:var(--accent);font-weight:500">${fmtM(Number(d.OPPORTUNITY))} ₸</span>` : ''}
+                  </div>
+                  ${allUsers[d.ASSIGNED_BY_ID] ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">👤 ${allUsers[d.ASSIGNED_BY_ID]}</div>` : ''}
+                  ${(() => {
+                    try {
+                      const execs = getExecutorNames(d, EXECUTOR_FIELDS[currentFunnelId] || []);
+                      return execs ? `<div style="margin-top:4px;display:flex;flex-direction:column;gap:1px">${execs}</div>` : '';
+                    } catch(e) { return ''; }
+                  })()}
+                </div>`).join('')
+              }
+              ${sd.length > 10 ? `<div style="text-align:center;font-size:11px;color:var(--muted);padding:4px">ещё ${sd.length-10}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function renderFunnelTable(deals, funnel) {
+  const stageNames = {};
+  funnel.stages.forEach(s => stageNames[s.id] = s.name);
+  const sorted = deals.slice().sort((a,b) => new Date(b.DATE_CREATE) - new Date(a.DATE_CREATE));
+  document.getElementById('funnelContent').innerHTML = `
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Дата</th><th>Название</th><th>Стадия</th><th>Сумма</th><th>Менеджер</th><th>Исполнители</th></tr></thead>
+      <tbody>${sorted.slice(0,100).map(d => {
+        const st = funnel.stages.find(s => s.id === d.STAGE_ID);
+        const stColor = st?.color || '#7b82a0';
+        const stName = stageNames[d.STAGE_ID] || d.STAGE_ID;
+        return `<tr>
+          <td>${new Date(d.DATE_CREATE).toLocaleDateString('ru')}</td>
+          <td style="max-width:200px;white-space:normal;font-size:12px">${d.TITLE||'—'}</td>
+          <td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${stColor}22;color:${stColor};font-weight:500;white-space:nowrap">${stName}</span></td>
+          <td>${d.OPPORTUNITY && Number(d.OPPORTUNITY)>0 ? fmtM(Number(d.OPPORTUNITY))+' ₸' : '—'}</td>
+          <td style="font-size:12px">${allUsers[d.ASSIGNED_BY_ID]||'—'}</td>
+          <td style="font-size:11px;line-height:1.6">${getExecutorNames(d, EXECUTOR_FIELDS[currentFunnelId]||[]) || '—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+}
+
+function renderFunnelSummary(deals, funnel) {
+  const stageMap = {};
+  funnel.stages.forEach(s => { stageMap[s.id] = { ...s, count:0, amount:0 }; });
+  deals.forEach(d => { if (stageMap[d.STAGE_ID]) { stageMap[d.STAGE_ID].count++; stageMap[d.STAGE_ID].amount += Number(d.OPPORTUNITY||0); } });
+  const total = deals.length || 1;
+  const maxCount = Math.max(...Object.values(stageMap).map(s => s.count), 1);
+
+  document.getElementById('funnelContent').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${funnel.stages.filter(s => stageMap[s.id]?.count > 0).map(s => {
+        const sd = stageMap[s.id];
+        const pct = Math.round(sd.count / total * 100);
+        const barW = Math.round(sd.count / maxCount * 100);
+        return `<div style="display:grid;grid-template-columns:200px 1fr 60px 120px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,47,66,.4)">
+          <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.name}">${s.name}</div>
+          <div style="background:var(--surface2);border-radius:4px;height:18px;overflow:hidden">
+            <div style="width:${barW}%;height:100%;background:${s.color};border-radius:4px;display:flex;align-items:center;padding-left:6px">
+              <span style="font-size:10px;font-weight:600;color:#000">${sd.count > 2 ? sd.count : ''}</span>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text);text-align:right;font-weight:500">${sd.count} (${pct}%)</div>
+          <div style="font-size:11px;color:var(--accent);text-align:right">${sd.amount > 0 ? fmtM(sd.amount)+' ₸' : ''}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ========== GA4 ==========
+let currentGaSite = 'baitun';
+let gaTimelineChart, gaSourceChart;
+
+function switchGaTab(el, site) {
+  currentGaSite = site;
+  document.querySelectorAll('.table-box .tab').forEach(t => {
+    if (t.onclick && t.onclick.toString().includes('switchGaTab')) t.classList.remove('active');
+  });
+  el.classList.add('active');
+  loadGA4();
+}
+
+async function loadGA4() {
+  document.getElementById('gaSessions').textContent = '...';
+  try {
+    const period = document.getElementById('gaPeriod').value;
+    const r = await fetch(`/api/ga4?site=${currentGaSite}&startDate=${period}&endDate=today`);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+
+    const rows = data.rows || [];
+    let totalSessions=0, totalUsers=0, totalNew=0, totalConv=0, totalBounce=0, totalDuration=0, count=0;
+    const byDate = {}, byChannel = {};
+
+    rows.forEach(row => {
+      const channel = row.dimensionValues[0].value;
+      const date = row.dimensionValues[1].value;
+      const sessions = parseInt(row.metricValues[0].value||0);
+      const users = parseInt(row.metricValues[1].value||0);
+      const newU = parseInt(row.metricValues[2].value||0);
+      const bounce = parseFloat(row.metricValues[3].value||0);
+      const duration = parseFloat(row.metricValues[4].value||0);
+      const conv = parseInt(row.metricValues[5].value||0);
+
+      totalSessions += sessions;
+      totalUsers += users;
+      totalNew += newU;
+      totalConv += conv;
+      totalBounce += bounce;
+      totalDuration += duration;
+      count++;
+
+      // by date
+      if (!byDate[date]) byDate[date] = 0;
+      byDate[date] += sessions;
+
+      // by channel
+      if (!byChannel[channel]) byChannel[channel] = { sessions: 0, users: 0 };
+      byChannel[channel].sessions += sessions;
+      byChannel[channel].users += users;
+    });
+
+    const avgBounce = count > 0 ? (totalBounce/count*100).toFixed(1) : 0;
+    const avgDuration = count > 0 ? Math.round(totalDuration/count) : 0;
+    const mins = Math.floor(avgDuration/60);
+    const secs = avgDuration % 60;
+
+    document.getElementById('gaSessions').textContent = fmtM(totalSessions);
+    document.getElementById('gaUsers').textContent = fmtM(totalUsers);
+    document.getElementById('gaNewUsers').textContent = fmtM(totalNew);
+    document.getElementById('gaConversions').textContent = totalConv;
+    document.getElementById('gaBounce').textContent = avgBounce + '%';
+    document.getElementById('gaDuration').textContent = `${mins}м ${secs}с`;
+
+    // Timeline chart
+    const dates = Object.keys(byDate).sort();
+    if (gaTimelineChart) gaTimelineChart.destroy();
+    gaTimelineChart = new Chart(document.getElementById('gaTimelineChart'), {
+      type: 'line',
+      data: {
+        labels: dates.map(d => d.slice(4,6)+'.'+d.slice(6,8)),
+        datasets:[{ data: dates.map(d=>byDate[d]), borderColor:'#00c896', backgroundColor:'rgba(0,200,150,0.08)', fill:true, tension:.4, pointRadius:2 }]
+      },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+                y:{ticks:{color:'#7b82a0',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}}} }
+    });
+
+    // Channel colors
+    const channelColors = {
+      'Organic Search':'#4285f4', 'Paid Search':'#fbbc04', 'Direct':'#00c896',
+      'Organic Social':'#e45c8a', 'Paid Social':'#4f8ef7', 'Referral':'#f7934f',
+      'Email':'#9b8ef7', 'Unassigned':'#7b82a0', 'Display':'#c084fc',
+      'Organic Video':'#25d366', 'Paid Video':'#17a84a'
+    };
+
+    const sortedChannels = Object.entries(byChannel).sort((a,b)=>b[1].sessions-a[1].sessions);
+    const total = sortedChannels.reduce((s,[,v])=>s+v.sessions,0);
+
+    if (gaSourceChart) gaSourceChart.destroy();
+    gaSourceChart = new Chart(document.getElementById('gaSourceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: sortedChannels.map(([c])=>c),
+        datasets:[{ data: sortedChannels.map(([,v])=>v.sessions), backgroundColor: sortedChannels.map(([c])=>channelColors[c]||'#7b82a0'), borderWidth:0 }]
+      },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{legend:{display:false}} }
+    });
+
+    document.getElementById('gaSourceLegend').innerHTML = sortedChannels.slice(0,6).map(([c,v])=>
+      `<div class="legend-item"><div class="ldot" style="background:${channelColors[c]||'#7b82a0'}"></div>${c} ${total?Math.round(v.sessions/total*100):0}%</div>`
+    ).join('');
+
+    // Organic vs Paid table
+    let organic=0, paid=0, direct=0, social=0, other=0;
+    sortedChannels.forEach(([c,v]) => {
+      if (c.includes('Organic Search')) organic += v.sessions;
+      else if (c.includes('Paid')) paid += v.sessions;
+      else if (c === 'Direct') direct += v.sessions;
+      else if (c.includes('Social')) social += v.sessions;
+      else other += v.sessions;
+    });
+    const groups = [
+      { label:'🔍 Органический поиск', val:organic, color:'#4285f4', note:'Google, Yandex' },
+      { label:'💰 Платная реклама', val:paid, color:'#fbbc04', note:'Google Ads, FB, TikTok' },
+      { label:'📱 Соцсети', val:social, color:'#e45c8a', note:'Instagram, Facebook' },
+      { label:'🔗 Прямые заходы', val:direct, color:'#00c896', note:'Закладки, прямой URL' },
+      { label:'🌐 Другое', val:other, color:'#7b82a0', note:'Реферальные, email' },
+    ].filter(g=>g.val>0).sort((a,b)=>b.val-a.val);
+    const maxG = Math.max(...groups.map(g=>g.val), 1);
+    document.getElementById('gaChannelTable').innerHTML = groups.map(g=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:12px;color:var(--text)">${g.label}</span>
+          <span style="font-size:12px;color:var(--text);font-weight:500">${fmtM(g.val)}</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:6px">
+          <div style="width:${Math.round(g.val/maxG*100)}%;height:100%;background:${g.color};border-radius:4px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${g.note}</div>
+      </div>`).join('');
+
+  } catch(e) {
+    document.getElementById('gaSessions').textContent = '—';
+    console.error('GA4 error:', e);
+    // Show error message
+    document.getElementById('gaChannelTable').innerHTML = `<div style="color:var(--danger);font-size:12px;padding:10px 0">⚠️ Ошибка: ${e.message}<br><span style="color:var(--muted)">Убедитесь что сервисный аккаунт добавлен в GA4</span></div>`;
+  }
+}
+
+// ========== TIKTOK ==========
+let ttData = { spend:0, impressions:0, clicks:0, leads:0, ctr:0, cpl:0, campaigns:[], byDay:[] };
+let ttDailyChart;
+let currentTtTab = 'leads';
+
+function toggleTtTable() {
+  const wrap = document.getElementById('ttTableWrap');
+  const btn = document.getElementById('toggleTtBtn');
+  const hidden = wrap.style.display === 'none';
+  wrap.style.display = hidden ? 'block' : 'none';
+  btn.textContent = hidden ? 'Скрыть ▲' : 'Показать ▼';
+}
+
+function switchTtTab(el, tab) {
+  currentTtTab = tab;
+  document.querySelectorAll('#ttSection .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTtTab();
+}
+
+function renderTtTab() {
+  if (currentTtTab === 'leads') renderTtLeads();
+  else renderTtCampaigns();
+}
+
+function renderTtLeads() {
+  // Show TikTok leads from Bitrix24 CRM (SOURCE_ID=23)
+  const days = parseInt(document.getElementById('ttPeriod').value);
+  const from = new Date(Date.now() - days * 86400000);
+  const ttLeads = allLeads.filter(l => {
+    const src = (l.SOURCE_ID||'').toString();
+    const utm = (l.UTM_SOURCE||'').toLowerCase();
+    const title = (l.TITLE||'').toLowerCase();
+    return (src === '23' || utm === 'tiktok' || title.includes('tiktok')) && new Date(l.DATE_CREATE) >= from;
+  });
+
+  document.getElementById('ttLeads').textContent = ttLeads.length;
+  document.getElementById('ttTableTitle').textContent = `Лиды TikTok из Bitrix24 (${ttLeads.length})`;
+
+  const el = document.getElementById('ttTableContent');
+  if (!ttLeads.length) { el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Нет лидов TikTok за период</div>'; return; }
+
+  const rows = ttLeads.sort((a,b) => new Date(b.DATE_CREATE)-new Date(a.DATE_CREATE)).slice(0,100);
+  el.innerHTML = `<table><thead><tr><th>Дата</th><th>Имя</th><th>Кампания</th><th>Статус</th><th>Менеджер</th></tr></thead>
+  <tbody>${rows.map(l=>`<tr>
+    <td>${new Date(l.DATE_CREATE).toLocaleDateString('ru')}</td>
+    <td style="font-size:12px">${((l.NAME||'')+' '+(l.LAST_NAME||'')).trim()||l.TITLE||'—'}</td>
+    <td style="font-size:11px;color:var(--muted)">${detectCampaign(l)}</td>
+    <td>${statusBadge(l.STATUS_ID)}</td>
+    <td>${allUsers[l.ASSIGNED_BY_ID]||'—'}</td>
+  </tr>`).join('')}</tbody></table>`;
+
+  // Update CRM KPIs for TikTok
+  renderTtDailyFromCrm(ttLeads);
+}
+
+function renderTtDailyFromCrm(ttLeads) {
+  const byDay = {};
+  ttLeads.forEach(l => {
+    const day = l.DATE_CREATE.slice(0,10);
+    byDay[day] = (byDay[day]||0) + 1;
+  });
+  const days = Object.keys(byDay).sort().slice(-30);
+  if (ttDailyChart) ttDailyChart.destroy();
+  ttDailyChart = new Chart(document.getElementById('ttDailyChart'), {
+    type: 'bar',
+    data: { labels: days.map(d=>d.slice(5)), datasets:[{ label:'Лиды', data: days.map(d=>byDay[d]||0), backgroundColor:'rgba(192,132,252,0.7)', borderRadius:3 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+              y:{ticks:{color:'#7b82a0',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}}} }
+  });
+}
+
+function renderTtCampaigns() {
+  const el = document.getElementById('ttTableContent');
+  if (!ttData.campaigns.length) {
+    el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Введите TikTok Access Token и Advertiser ID выше для загрузки статистики кампаний</div>';
+    return;
+  }
+  const rows = ttData.campaigns.sort((a,b)=>b.spend-a.spend);
+  el.innerHTML = `<table><thead><tr><th>Кампания</th><th>Статус</th><th>Расход $</th><th>Показы</th><th>Клики</th><th>CTR</th></tr></thead>
+  <tbody>${rows.map(c=>`<tr>
+    <td style="max-width:200px;white-space:normal;font-size:12px">${c.name}</td>
+    <td><span class="badge ${c.status==='ENABLE'?'b-won':'b-junk'}">${c.status==='ENABLE'?'Активна':'Пауза'}</span></td>
+    <td>$${(c.spend||0).toFixed(0)}</td>
+    <td>${fmtM(c.impressions||0)}</td>
+    <td>${fmtM(c.clicks||0)}</td>
+    <td>${c.ctr||0}%</td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadTikTok() {
+  if (!authToken) return;
+  document.getElementById('ttSubtitle').textContent = 'Загрузка...';
+  try {
+    const days = parseInt(document.getElementById('ttPeriod').value);
+    const endDate = new Date().toISOString().slice(0,10);
+    const startDate = new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+
+    const r = await fetch(`/api/tiktok?startDate=${startDate}&endDate=${endDate}`, {
+      headers: getAuthHeaders()
+    });
+    const d = await r.json();
+
+    // TikTok API pending approval
+    if (d.pending) {
+      document.getElementById('ttSubtitle').textContent = 'TikTok Ads API — ожидает подтверждения';
+      document.getElementById('ttSpend').textContent = '—';
+      document.getElementById('ttReach').textContent = '—';
+      document.getElementById('ttClicks').textContent = '—';
+      document.getElementById('ttCtr').textContent = '—';
+      renderTtLeads(); // показываем лиды из CRM
+      return;
+    }
+
+    if (d.code !== 0) throw new Error(d.message || 'TikTok API error');
+
+    let totalSpend=0, totalImpr=0, totalClicks=0;
+    const byDay = {};
+    (d.data?.list||[]).forEach(item => {
+      totalSpend += parseFloat(item.metrics?.spend||0);
+      totalImpr  += parseInt(item.metrics?.impressions||0);
+      totalClicks+= parseInt(item.metrics?.clicks||0);
+      const day = (item.dimensions?.stat_time_day||'').slice(0,10);
+      if (day) { if(!byDay[day]) byDay[day]={spend:0,clicks:0}; byDay[day].spend+=parseFloat(item.metrics?.spend||0); byDay[day].clicks+=parseInt(item.metrics?.clicks||0); }
+    });
+
+    const ctr = totalImpr>0?(totalClicks/totalImpr*100).toFixed(2):0;
+    document.getElementById('ttSpend').textContent   = '$'+totalSpend.toFixed(0);
+    document.getElementById('ttReach').textContent   = fmtM(totalImpr);
+    document.getElementById('ttClicks').textContent  = fmtM(totalClicks);
+    document.getElementById('ttCtr').textContent     = ctr+'%';
+    document.getElementById('ttSubtitle').textContent = 'TikTok Ads · данные загружены';
+
+    const dayKeys = Object.keys(byDay).sort().slice(-30);
+    if (ttDailyChart) ttDailyChart.destroy();
+    ttDailyChart = new Chart(document.getElementById('ttDailyChart'), {
+      type:'bar', data:{ labels: dayKeys.map(d=>d.slice(5)),
+        datasets:[{ label:'Расход $', data: dayKeys.map(d=>byDay[d].spend||0), backgroundColor:'rgba(192,132,252,0.7)', borderRadius:3 }]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7b82a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+                y:{ticks:{color:'#7b82a0',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}}} }
+    });
+    renderTtLeads();
+  } catch(e) {
+    document.getElementById('ttSubtitle').textContent = '⚠️ ' + e.message;
+    renderTtLeads();
+  }
+}
+
+// Sync goes through Vercel /api/sync (has JWT auth + calls Bitrix directly)
+
+async function runSync() {
+  const btn = document.getElementById('syncBtnMain');
+  const originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Синхронизация...'; }
+  try {
+    const r = await fetch('/api/sync?type=all', { headers: getAuthHeaders() });
+    const d = await r.json();
+    if (d.success) {
+      if (btn) { btn.textContent = `✅ ${d.leads || 0} лидов`; setTimeout(() => { if(btn) btn.textContent = originalText; }, 4000); }
+      loadData();
+    } else {
+      alert('❌ Ошибка: ' + (d.error || 'Неизвестная ошибка'));
+      if (btn) btn.textContent = originalText;
+    }
+  } catch(e) {
+    alert('❌ Ошибка синхронизации: ' + e.message);
+    if (btn) btn.textContent = originalText;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function loadData() {
+  document.getElementById('loadingView').style.display = 'flex';
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('errorView').style.display = 'none';
+  document.getElementById('statusDot').className = 'dot';
+  document.getElementById('syncTime').textContent = 'Загрузка...';
+
+  try {
+    setProgress('Загрузка сотрудников...', 5);
+    try {
+      const usersRes = await fetch('/api/data?type=users', { headers: getAuthHeaders() }).then(r => r.json());
+      if (Array.isArray(usersRes) && usersRes.length > 0) {
+        usersRes.forEach(u => { allUsers[u.id] = ((u.name||'') + ' ' + (u.last_name||'')).trim(); salesUserIds.add(u.id); });
+      } else {
+        await loadDepartments();
+        await loadUsers();
+      }
+    } catch(e) {
+      await loadDepartments();
+      await loadUsers();
+    }
+
+    setProgress('Загрузка лидов...', 10);
+    // Try fast Supabase first, fallback to Bitrix
+    let leads = [], deals = [];
+    try {
+      setProgress('Загрузка из базы данных...', 15);
+      const [leadsRes, dealsRes] = await Promise.all([
+        fetch('/api/data?type=leads&limit=10000', { headers: getAuthHeaders() }).then(r => r.json()),
+        fetch('/api/data?type=deals&limit=5000', { headers: getAuthHeaders() }).then(r => r.json())
+      ]);
+      if (Array.isArray(leadsRes) && leadsRes.length > 0) {
+        // Map Supabase fields to Bitrix format
+        leads = leadsRes.map(l => ({
+          ID: l.id, TITLE: l.title, STATUS_ID: l.status_id, SOURCE_ID: l.source_id,
+          UTM_SOURCE: l.utm_source, UTM_MEDIUM: l.utm_medium, UTM_CAMPAIGN: l.utm_campaign,
+          UTM_CONTENT: l.utm_content, ASSIGNED_BY_ID: l.assigned_by_id,
+          NAME: l.name, LAST_NAME: l.last_name, OPPORTUNITY: l.opportunity,
+          CURRENCY_ID: l.currency_id, DATE_CREATE: l.date_create
+        }));
+        deals = (Array.isArray(dealsRes) ? dealsRes : []).map(d => ({
+          ID: d.id, TITLE: d.title, STAGE_ID: d.stage_id, SOURCE_ID: d.source_id,
+          UTM_SOURCE: d.utm_source, UTM_CAMPAIGN: d.utm_campaign,
+          ASSIGNED_BY_ID: d.assigned_by_id, OPPORTUNITY: d.opportunity,
+          CURRENCY_ID: d.currency_id, DATE_CREATE: d.date_create,
+          // executor fields from supabase
+          UF_CRM_1629193916: d.uf_crm_gap,
+          UF_CRM_1664348197: d.uf_crm_visualizer,
+          UF_CRM_1664348185: d.uf_crm_technik,
+          UF_CRM_1664348549: d.uf_crm_componovshik,
+          UF_CRM_CHERTEZHNIK: d.uf_crm_chertezhnik,
+          UF_CRM_1717054953: d.uf_crm_designer,
+          UF_CRM_1748253788: d.uf_crm_main_designer,
+          UF_CRM_6660371C64E62: d.uf_crm_gip,
+        }));
+        useSupabase = true;
+        setProgress(`Загружено из кэша: ${leads.length} лидов, ${deals.length} сделок`, 80);
+      } else {
+        throw new Error('Supabase empty, falling back to Bitrix');
+      }
+    } catch(sbErr) {
+      // Fallback to Bitrix
+      setProgress('Загрузка лидов из Bitrix24...', 10);
+      leads = await fetchAll('crm.lead.list', {
+        select: ['ID','TITLE','STATUS_ID','SOURCE_ID','DATE_CREATE','ASSIGNED_BY_ID','NAME','LAST_NAME','OPPORTUNITY','CURRENCY_ID','UTM_SOURCE','UTM_MEDIUM','UTM_CAMPAIGN','UTM_CONTENT'],
+        order: { DATE_CREATE: 'DESC' }
+      }, (done, total) => {
+        setProgress(`Лиды: ${done} из ${total}`, 10 + Math.round(done / total * 40));
+      });
+      setProgress('Загрузка сделок...', 55);
+      deals = await fetchAll('crm.deal.list', {
+        select: ['ID','TITLE','STAGE_ID','SOURCE_ID','DATE_CREATE','ASSIGNED_BY_ID','OPPORTUNITY','CURRENCY_ID'],
+        order: { DATE_CREATE: 'DESC' }
+      }, (done, total) => {
+        setProgress(`Сделки: ${done} из ${total}`, 55 + Math.round(done / total * 40));
+      });
+    }
+
+    setProgress('Готово!', 100);
+    allLeads = leads;
+    allDeals = deals;
+
+    fillManagerFilter();
+    applyFilters();
+
+    document.getElementById('loadingView').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('statusDot').className = 'dot';
+    const src = useSupabase ? '⚡ кэш' : '🔄 Bitrix';
+    document.getElementById('syncTime').textContent = src + ' · ' + new Date().toLocaleTimeString('ru');
+    // Trigger background sync via Edge Function (not broken api/sync)
+    if (useSupabase) {
+      fetch('/api/sync?type=all', { headers: getAuthHeaders() })
+        .then(r => r.json()).then(d => { if (d.success) console.log('Edge sync done:', d); })
+        .catch(() => {});
+    }
+    initFbAccList();
+    loadFacebook(); // загружаем FB параллельно
+    renderTtLeads(); // TikTok лиды из CRM
+    loadGA4(); // Google Analytics
+    renderFunnel(); // Воронки производства
+
+  } catch (e) {
+    document.getElementById('loadingView').style.display = 'none';
+    document.getElementById('statusDot').className = 'dot red';
+    document.getElementById('syncTime').textContent = 'Ошибка подключения';
+    document.getElementById('errorView').style.display = 'block';
+    document.getElementById('errorView').innerHTML = `
+      <div class="error-box">
+        <h3>⚠️ Ошибка загрузки данных</h3>
+        <p>Не удалось загрузить данные. Попробуй запустить синхронизацию вручную или обнови страницу.</p>
+        <code>${e.message}</code>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn primary" onclick="loadData()">↻ Обновить</button>
+          <button class="btn" onclick="runSync()">⚡ Синхронизировать из Bitrix</button>
+        </div>
+      </div>`;
+  }
+}
+
+let selectedManagers = new Set();
+
+function fillManagerFilter() {
+  let ids;
+  try {
+    if (salesUserIds.size > 0) {
+      ids = [...salesUserIds].filter(id => allUsers[id]);
+    } else {
+      const s = new Set();
+      [...(allLeads||[]), ...(allDeals||[])].forEach(r => { if (r && r.ASSIGNED_BY_ID && allUsers[r.ASSIGNED_BY_ID]) s.add(r.ASSIGNED_BY_ID); });
+      ids = [...s];
+    }
+  } catch(e) { ids = []; console.warn('fillManagerFilter error:', e); }
+  ids.sort((a, b) => (allUsers[a] || '').localeCompare(allUsers[b] || ''));
+  const list = document.getElementById('mgrList');
+  list.innerHTML = ids.map(id => `
+    <label class="multicheck-item">
+      <input type="checkbox" value="${id}" ${selectedManagers.size===0?'checked':selectedManagers.has(id)?'checked':''} onchange="onMgrChange(this)">
+      ${allUsers[id] || 'ID '+id}
+    </label>`).join('');
+  updateMgrBtn();
+}
+
+function onMgrChange(el) {
+  if (el.checked) selectedManagers.add(el.value);
+  else selectedManagers.delete(el.value);
+  updateMgrBtn();
+  applyFilters();
+}
+
+function selectAllMgr(all) {
+  document.querySelectorAll('#mgrList input').forEach(cb => {
+    cb.checked = all;
+    if (all) selectedManagers.delete(cb.value);
+    else selectedManagers.add(cb.value); // none selected = show all
+  });
+  if (all) selectedManagers.clear();
+  updateMgrBtn();
+  applyFilters();
+}
+
+function updateMgrBtn() {
+  const total = document.querySelectorAll('#mgrList input').length;
+  const checked = document.querySelectorAll('#mgrList input:checked').length;
+  const btn = document.getElementById('mgrBtn');
+  if (!btn) return;
+  btn.textContent = checked === 0 || checked === total ? 'Все менеджеры ▾' : `Менеджеры (${checked}) ▾`;
+}
+
+function onPeriodChange() {
+  const p = document.getElementById('filterPeriod').value;
+  const wrap = document.getElementById('customDatesWrap');
+  wrap.style.display = p === 'custom' ? 'flex' : 'none';
+  if (p === 'custom') {
+    // Set default date range: last 30 days
+    const to = new Date();
+    const from = new Date(Date.now() - 30 * 86400000);
+    document.getElementById('dateTo').value = to.toISOString().slice(0,10);
+    document.getElementById('dateFrom').value = from.toISOString().slice(0,10);
+  }
+  applyFilters();
+}
+
+function filterByPeriod(items, field) {
+  const p = document.getElementById('filterPeriod').value;
+  const yr = document.getElementById('filterYear').value;
+  const now = new Date();
+
+  return items.filter(r => {
+    const d = new Date(r[field]);
+
+    // Произвольный период
+    if (p === 'custom') {
+      const from = document.getElementById('dateFrom').value;
+      const to = document.getElementById('dateTo').value;
+      if (from && to) return d >= new Date(from) && d <= new Date(to + 'T23:59:59');
+      return true;
+    }
+
+    // Если выбран конкретный год — фильтруем только по году
+    if (yr) return String(d.getFullYear()) === yr;
+
+    if (p === 'all') return true;
+    if (p === 'today') return d >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (p === 'week') return d >= new Date(now - 7 * 86400000);
+    if (p === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (p === 'quarter') {
+      const q = Math.floor(now.getMonth() / 3);
+      return d >= new Date(now.getFullYear(), q * 3, 1) && d.getFullYear() === now.getFullYear();
+    }
+    if (p === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+function applyDeptFilter() {
+  const val = document.getElementById('filterDept').value;
+  let ids;
+  if (val === 'sales' && salesUserIds.size > 0) {
+    ids = [...salesUserIds].filter(id => allUsers[id]);
+  } else {
+    const s = new Set();
+    [...(allLeads||[]), ...(allDeals||[])].forEach(r => { if (r && r.ASSIGNED_BY_ID && allUsers[r.ASSIGNED_BY_ID]) s.add(r.ASSIGNED_BY_ID); });
+    ids = [...s];
+  }
+  selectedManagers.clear();
+  ids.sort((a,b) => (allUsers[a]||'').localeCompare(allUsers[b]||''));
+  const list = document.getElementById('mgrList');
+  list.innerHTML = ids.map(id => `
+    <label class="multicheck-item">
+      <input type="checkbox" value="${id}" checked onchange="onMgrChange(this)">
+      ${allUsers[id]||'ID '+id}
+    </label>`).join('');
+  updateMgrBtn();
+  applyFilters();
+}
+
+function applyFilters() {
+  const src = document.getElementById('filterSource').value;
+  // managers filtered via selectedManagers set
+  let leads = filterByPeriod(allLeads, 'DATE_CREATE');
+  let deals = filterByPeriod(allDeals, 'DATE_CREATE');
+  if (src) { leads = leads.filter(r => (r.SOURCE_ID || '').toUpperCase().includes(src)); deals = deals.filter(r => (r.SOURCE_ID || '').toUpperCase().includes(src)); }
+  if (selectedManagers.size > 0) { leads = leads.filter(r => selectedManagers.has(r.ASSIGNED_BY_ID)); deals = deals.filter(r => selectedManagers.has(r.ASSIGNED_BY_ID)); }
+  renderKPI(leads, deals);
+  renderTimeline(leads, deals);
+  renderSources(leads);
+  renderDealsFunnel(deals);
+  renderManagers(leads, deals);
+  renderLeadStatus(leads);
+  renderAttribution(leads, deals);
+  renderTable(currentTab, leads, deals);
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString('ru-RU'); }
+function fmtM(n) { n = Number(n || 0); if (n >= 1000000) return (n / 1000000).toFixed(1) + 'М'; if (n >= 1000) return Math.round(n / 1000) + 'K'; return String(n); }
+
+function renderKPI(leads, deals) {
+  const won = deals.filter(d => d.STAGE_ID === 'WON' || d.STAGE_ID === 'FINAL_INVOICE');
+  const lost = deals.filter(d => d.STAGE_ID === 'LOSE');
+  const totalAmt = deals.reduce((s, d) => s + Number(d.OPPORTUNITY || 0), 0);
+  const wonAmt = won.reduce((s, d) => s + Number(d.OPPORTUNITY || 0), 0);
+  const conv = deals.length ? Math.round(won.length / deals.length * 100) : 0;
+  document.getElementById('kLeads').textContent = fmt(leads.length);
+  document.getElementById('kDeals').textContent = fmt(deals.length);
+  document.getElementById('kAmount').textContent = fmtM(totalAmt) + ' ₸';
+  document.getElementById('kWon').textContent = fmt(won.length);
+  document.getElementById('kLost').textContent = fmt(lost.length);
+  document.getElementById('kConv').textContent = conv + '%';
+  document.getElementById('kAmountSub').textContent = 'Выиграно: ' + fmtM(wonAmt) + ' ₸';
+  document.getElementById('kWonSub').textContent = fmtM(wonAmt) + ' ₸';
+  document.getElementById('kConvSub').textContent = 'сделок выиграно';
+}
+
+function renderTimeline(leads, deals) {
+  const months = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'), label: d.toLocaleString('ru', { month: 'short' }) });
+  }
+  const countBy = (arr, f) => { const c = {}; arr.forEach(r => { const m = (r[f] || '').slice(0, 7); c[m] = (c[m] || 0) + 1; }); return c; };
+  const lc = countBy(leads, 'DATE_CREATE');
+  const dc = countBy(deals, 'DATE_CREATE');
+  const wc = countBy(deals.filter(d => d.STAGE_ID === 'WON'), 'DATE_CREATE');
+  if (chartTimeline) chartTimeline.destroy();
+  chartTimeline = new Chart(document.getElementById('chartTimeline'), {
+    type: 'line',
+    data: {
+      labels: months.map(m => m.label),
+      datasets: [
+        { label: 'Лиды', data: months.map(m => lc[m.key] || 0), borderColor: '#00c896', backgroundColor: 'rgba(0,200,150,0.08)', tension: .4, fill: true, pointRadius: 3 },
+        { label: 'Сделки', data: months.map(m => dc[m.key] || 0), borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,0.08)', tension: .4, fill: true, pointRadius: 3 },
+        { label: 'Выиграно', data: months.map(m => wc[m.key] || 0), borderColor: '#f7934f', tension: .4, fill: false, pointRadius: 3 },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#7b82a0', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#7b82a0', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+  });
+}
+
+function renderSources(leads) {
+  const counts = {};
+  leads.forEach(l => {
+    const s = detectSource(l);
+    counts[s] = (counts[s] || 0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const total = sorted.reduce((s, e) => s + e[1], 0);
+  const colors = sorted.map(([l]) => SOURCE_COLORS[l] || '#7b82a0');
+  if (chartSources) chartSources.destroy();
+  chartSources = new Chart(document.getElementById('chartSources'), {
+    type: 'doughnut',
+    data: { labels: sorted.map(e => e[0]), datasets: [{ data: sorted.map(e => e[1]), backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } }
+  });
+  document.getElementById('sourceLegend').innerHTML = sorted.map(([l, v]) =>
+    `<div class="legend-item"><div class="ldot" style="background:${SOURCE_COLORS[l] || '#7b82a0'}"></div>${l} ${total ? Math.round(v / total * 100) : 0}%</div>`
+  ).join('');
+}
+
+function renderDealsFunnel(deals) {
+  if (!deals) return;
+  const stages = {};
+  deals.forEach(d => { stages[d.STAGE_ID] = (stages[d.STAGE_ID] || 0) + 1; });
+  const sorted = Object.entries(stages).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const max = sorted[0]?.[1] || 1;
+  const colors = ['#00c896', '#4f8ef7', '#f7934f', '#e45c8a', '#9b8ef7', '#f7d34f', '#5cdce4', '#fb923c'];
+  const stageNames = { 'NEW': 'Новая', 'PREPARATION': 'Подготовка', 'PREPAYMENT_INVOICE': 'Счёт аванса', 'EXECUTING': 'В работе', 'FINAL_INVOICE': 'Финальный счёт', 'WON': 'Выиграно ✓', 'LOSE': 'Проиграно ✗', 'APOLOGY': 'Претензия' };
+  document.getElementById('funnelChart').innerHTML = sorted.length
+    ? sorted.map(([stage, count], i) => `
+      <div class="funnel-row">
+        <div class="funnel-label" title="${stage}">${stageNames[stage] || stage}</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${Math.round(count / max * 100)}%;background:${colors[i % colors.length]}">${count > 5 ? count : ''}</div></div>
+        <div class="funnel-count">${count}</div>
+      </div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Нет данных за период</div>';
+}
+
+function renderManagers(leads, deals) {
+  const mgrs = {};
+  leads.forEach(l => { const id = l.ASSIGNED_BY_ID; if (!id || !allUsers[id]) return; if (!mgrs[id]) mgrs[id] = { leads: 0, deals: 0, won: 0 }; mgrs[id].leads++; });
+  deals.forEach(d => { const id = d.ASSIGNED_BY_ID; if (!id || !allUsers[id]) return; if (!mgrs[id]) mgrs[id] = { leads: 0, deals: 0, won: 0 }; mgrs[id].deals++; if (d.STAGE_ID === 'WON') mgrs[id].won++; });
+  const sorted = Object.entries(mgrs).sort((a, b) => b[1].leads - a[1].leads).slice(0, 7);
+  const maxL = Math.max(...sorted.map(e => e[1].leads), 1);
+  const pal = ['#00c896', '#4f8ef7', '#f7934f', '#e45c8a', '#9b8ef7', '#f7d34f', '#5cdce4'];
+  document.getElementById('managerList').innerHTML = sorted.length
+    ? sorted.map(([id, s], i) => {
+        const name = allUsers[id] || 'ID ' + id;
+        const initials = name.split(' ').map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        return `<div class="mgr-row">
+          <div class="avatar" style="background:${pal[i % pal.length]}">${initials}</div>
+          <div class="mgr-info"><div class="mgr-name">${name}</div><div class="mgr-stats">Лиды: ${s.leads} · Сделки: ${s.deals} · Выиграно: ${s.won}</div></div>
+          <div><div class="mgr-bar-wrap"><div class="mgr-bar" style="width:${Math.round(s.leads / maxL * 100)}%;background:${pal[i % pal.length]}"></div></div></div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Нет данных за период</div>';
+}
+
+function renderLeadStatus(leads) {
+  const counts = {};
+  leads.forEach(l => { const s = l.STATUS_ID || 'NEW'; counts[s] = (counts[s] || 0) + 1; });
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+  const colors = labels.map(l => STATUS_COLORS[l] || '#7b82a0');
+  if (chartLeadStatus) chartLeadStatus.destroy();
+  chartLeadStatus = new Chart(document.getElementById('chartLeadStatus'), {
+    type: 'bar',
+    data: { labels: labels.map(l => LEAD_STATUS[l] || l), datasets: [{ data, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#7b82a0', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#7b82a0', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+  });
+}
+
+function srcBadge(lead) {
+  const s = typeof lead === 'object' ? detectSource(lead) : (SOURCE_MAP[(lead||'').toUpperCase()] || 'Другое');
+  const cls = {
+    'Facebook':'s-fb','Instagram':'s-ig',
+    'TikTok':'s-tt',
+    'WhatsApp':'s-wa','WhatsApp → Facebook':'s-wa','WhatsApp → TikTok':'s-wa','WhatsApp → Google':'s-wa','WhatsApp → Другое':'s-wa',
+    'Сайт':'s-site','Сайт → Facebook':'s-site','Сайт → TikTok':'s-site','Сайт → Google':'s-site',
+    'Звонок':'s-call','Google':'s-google'
+  }[s] || 's-other';
+  return `<span class="src ${cls}">${s}</span>`;
+}
+
+function statusBadge(st) {
+  const map = { NEW: 'b-new', IN_PROCESS: 'b-work', PROCESSED: 'b-wait', CONVERTED: 'b-won', JUNK: 'b-junk', FALSE: 'b-lost', WON: 'b-won', LOSE: 'b-lost' };
+  return `<span class="badge ${map[st] || 'b-junk'}">${LEAD_STATUS[st] || st}</span>`;
+}
+
+function renderTable(tab, leads, deals) {
+  const el = document.getElementById('tableContent');
+  if (tab === 'leads') {
+    const rows = leads.slice().sort((a, b) => new Date(b.DATE_CREATE) - new Date(a.DATE_CREATE)).slice(0, 100);
+    el.innerHTML = `<table><thead><tr><th>Дата</th><th>Имя / Название</th><th>Источник</th><th>Кампания</th><th>Статус</th><th>Менеджер</th><th>Сумма</th></tr></thead><tbody>${rows.map(l => `<tr>
+      <td>${new Date(l.DATE_CREATE).toLocaleDateString('ru')}</td>
+      <td style="max-width:160px;white-space:normal;font-size:12px">${((l.NAME || '') + ' ' + (l.LAST_NAME || '')).trim() || l.TITLE || '—'}</td>
+      <td>${srcBadge(l)}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:140px;white-space:normal">${detectCampaign(l)}</td>
+      <td>${statusBadge(l.STATUS_ID)}</td>
+      <td>${allUsers[l.ASSIGNED_BY_ID] || '—'}</td>
+      <td>${l.OPPORTUNITY && Number(l.OPPORTUNITY) > 0 ? fmt(l.OPPORTUNITY) + ' ₸' : '—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  } else {
+    const rows = deals.slice().sort((a, b) => new Date(b.DATE_CREATE) - new Date(a.DATE_CREATE)).slice(0, 100);
+    el.innerHTML = `<table><thead><tr><th>Дата</th><th>Название</th><th>Источник</th><th>Стадия</th><th>Менеджер</th><th>Сумма</th></tr></thead><tbody>${rows.map(d => `<tr>
+      <td>${new Date(d.DATE_CREATE).toLocaleDateString('ru')}</td>
+      <td>${d.TITLE || '—'}</td>
+      <td>${srcBadge(d.SOURCE_ID)}</td>
+      <td>${statusBadge(d.STAGE_ID)}</td>
+      <td>${allUsers[d.ASSIGNED_BY_ID] || '—'}</td>
+      <td>${d.OPPORTUNITY && Number(d.OPPORTUNITY) > 0 ? fmt(d.OPPORTUNITY) + ' ₸' : '—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+}
+
+function toggleTable() {
+  const wrap = document.getElementById('tableWrap');
+  const btn = document.getElementById('toggleTableBtn');
+  const hidden = wrap.style.display === 'none';
+  wrap.style.display = hidden ? 'block' : 'none';
+  btn.textContent = hidden ? 'Скрыть ▲' : 'Показать ▼';
+}
+
+function switchTab(el, tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const leads = filterByPeriod(allLeads, 'DATE_CREATE');
+  const deals = filterByPeriod(allDeals, 'DATE_CREATE');
+  renderTable(tab, leads, deals);
+}
+
+// ========== AUTH ==========
+let authToken = null;
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  const attEl = document.getElementById('loginAttempts');
+
+  if (!email || !password) {
+    errEl.textContent = 'Введите email и пароль';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Вход...';
+  errEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+    const data = await r.json();
+
+    if (r.status === 429) {
+      errEl.textContent = data.error;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+      return;
+    }
+
+    if (!data.ok) {
+      errEl.textContent = data.error || 'Ошибка входа';
+      errEl.style.display = 'block';
+      if (data.attemptsLeft !== undefined) {
+        attEl.textContent = data.attemptsLeft > 0
+          ? `Осталось попыток: ${data.attemptsLeft}`
+          : 'Аккаунт заблокирован на 15 минут';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+      return;
+    }
+
+    // Success
+    authToken = data.access_token;
+    sessionStorage.setItem('baitun_token', authToken);
+    sessionStorage.setItem('baitun_email', data.email);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = '';
+    loadData();
+  } catch(e) {
+    errEl.textContent = 'Ошибка сети. Попробуйте снова.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Войти';
+  }
+}
+
+// Allow Enter key on login form
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+    doLogin();
+  }
+});
+
+function getAuthHeaders() {
+  return { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' };
+}
+
+async function checkAuth() {
+  const saved = sessionStorage.getItem('baitun_token');
+  if (!saved) return false;
+  try {
+    const r = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', token: saved })
+    });
+    if (r.ok) {
+      authToken = saved;
+      return true;
+    }
+  } catch {}
+  sessionStorage.removeItem('baitun_token');
+  return false;
+}
+
+function doLogout() {
+  authToken = null;
+  sessionStorage.removeItem('baitun_token');
+  sessionStorage.removeItem('baitun_email');
+  document.getElementById('appContainer').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+}
+
+// Init: check for saved session
+(async () => {
+  const ok = await checkAuth();
+  if (ok) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = '';
+    loadData();
+  }
+  // else login screen stays visible
+})();
+
+setInterval(() => { if (authToken) loadData(); }, 10 * 60 * 1000);
+</script>
+</body>
+</html>
