@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/bitrix/:path*", "destination": "https://baitun.bitrix24.kz/rest/4079/anrsfsoo1hhcs3x3/:path*" }
+    { "source": "/bitrix/:path*", "destination": "https://baitun.bitrix24.kz/rest/4079/anrsfsoo1hhcs3x3/:path*" },
+    { "source": "/", "destination": "/index.html" }
   ],
   "headers": [
     {
