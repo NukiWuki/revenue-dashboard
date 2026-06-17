@@ -1612,33 +1612,19 @@ async function runSync() {
   const btn = document.getElementById('syncBtnMain');
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Синхронизация...'; }
-
   try {
-    // Шаг 1: users
-    if (btn) btn.textContent = '⏳ Сотрудники...';
-    const r1 = await fetch('/api/sync?type=users', { headers: getAuthHeaders() });
-    const d1 = await r1.json();
-    if (!d1.success) throw new Error(d1.error || 'Ошибка синхронизации users');
-
-    // Шаг 2: deals (по воронкам, быстрее)
-    if (btn) btn.textContent = '⏳ Сделки...';
-    const r2 = await fetch('/api/sync?type=deals', { headers: getAuthHeaders() });
-    const d2 = await r2.json();
-    if (!d2.success) throw new Error(d2.error || 'Ошибка синхронизации deals');
-
-    // Шаг 3: leads (больше всего записей)
-    if (btn) btn.textContent = '⏳ Лиды...';
-    const r3 = await fetch('/api/sync?type=leads', { headers: getAuthHeaders() });
-    const d3 = await r3.json();
-    if (!d3.success) throw new Error(d3.error || 'Ошибка синхронизации leads');
-
-    const total = (d1.users||0) + (d2.deals||0) + (d3.leads||0);
-    if (btn) {
-      btn.textContent = `✅ ${d3.leads||0} лидов, ${d2.deals||0} сделок`;
-      setTimeout(() => { if(btn) btn.textContent = originalText; }, 5000);
+    const r = await fetch('/api/sync?type=all', { headers: getAuthHeaders() });
+    const d = await r.json();
+    if (d.success) {
+      if (btn) {
+        btn.textContent = `✅ ${d.leads||0} лидов, ${d.deals||0} сделок`;
+        setTimeout(() => { if(btn) btn.textContent = originalText; }, 5000);
+      }
+      loadData();
+    } else {
+      alert('❌ Ошибка: ' + (d.error || 'Неизвестная ошибка'));
+      if (btn) btn.textContent = originalText;
     }
-    loadData();
-
   } catch(e) {
     alert('❌ Ошибка: ' + e.message);
     if (btn) btn.textContent = originalText;
