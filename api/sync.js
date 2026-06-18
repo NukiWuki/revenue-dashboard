@@ -32,7 +32,10 @@ module.exports = async (req, res) => {
     // Вызываем Edge Function — у неё нет таймаута 60 сек
     const r = await fetch(`${EDGE_URL}?secret=baitun2024&type=${type}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
     });
 
     const text = await r.text();

@@ -1684,19 +1684,18 @@ async function loadData() {
           CURRENCY_ID: l.currency_id, DATE_CREATE: l.date_create
         }));
         deals = (Array.isArray(dealsRes) ? dealsRes : []).map(d => ({
-          ID: d.id, TITLE: d.title, STAGE_ID: d.stage_id, SOURCE_ID: d.source_id,
-          UTM_SOURCE: d.utm_source, UTM_CAMPAIGN: d.utm_campaign,
+          ID: d.id, TITLE: d.title, STAGE_ID: d.stage_id, CATEGORY_ID: d.category_id,
+          SOURCE_ID: d.source_id, UTM_SOURCE: d.utm_source, UTM_CAMPAIGN: d.utm_campaign,
           ASSIGNED_BY_ID: d.assigned_by_id, OPPORTUNITY: d.opportunity,
-          CURRENCY_ID: d.currency_id, DATE_CREATE: d.date_create,
-          // executor fields from supabase
-          UF_CRM_1629193916: d.uf_crm_gap,
-          UF_CRM_1664348197: d.uf_crm_visualizer,
-          UF_CRM_1664348185: d.uf_crm_technik,
-          UF_CRM_1664348549: d.uf_crm_componovshik,
-          UF_CRM_CHERTEZHNIK: d.uf_crm_chertezhnik,
-          UF_CRM_1717054953: d.uf_crm_designer,
-          UF_CRM_1748253788: d.uf_crm_main_designer,
-          UF_CRM_6660371C64E62: d.uf_crm_gip,
+          CURRENCY_ID: d.currency_id, DATE_CREATE: d.date_create, CLOSEDATE: d.closedate,
+          // поля производства — правильные имена из Supabase
+          UF_CRM_1629193916: d.gap_id,
+          UF_CRM_1664348197: d.visualizer_id,
+          UF_CRM_1664348185: d.technik_id,
+          UF_CRM_1664348549: d.kompozitor_id,
+          UF_CRM_6660371C64E62: d.gip_id,
+          UF_CRM_1748253788: d.gl_designer_id,
+          UF_CRM_CHERTEZHNIK: d.cherteznik_id,
         }));
         useSupabase = true;
         setProgress(`Загружено из кэша: ${leads.length} лидов, ${deals.length} сделок`, 80);
