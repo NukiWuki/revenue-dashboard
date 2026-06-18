@@ -1640,10 +1640,20 @@ async function loadData() {
   document.getElementById('statusDot').className = 'dot';
   document.getElementById('syncTime').textContent = 'Загрузка...';
 
+  // Helper: fetch with auth, auto-logout on 401
+  async function authFetch(url) {
+    const r = await fetch(url, { headers: getAuthHeaders() });
+    if (r.status === 401) {
+      doLogout();
+      throw new Error('Сессия истекла — войдите снова');
+    }
+    return r.json();
+  }
+
   try {
     setProgress('Загрузка сотрудников...', 5);
     try {
-      const usersRes = await fetch('/api/data?type=users', { headers: getAuthHeaders() }).then(r => r.json());
+      const usersRes = await authFetch('/api/data?type=users');
       if (Array.isArray(usersRes) && usersRes.length > 0) {
         usersRes.forEach(u => { allUsers[u.id] = ((u.name||'') + ' ' + (u.last_name||'')).trim(); salesUserIds.add(u.id); });
       } else {
@@ -1651,18 +1661,18 @@ async function loadData() {
         await loadUsers();
       }
     } catch(e) {
+      if (e.message.includes('истекла')) throw e;
       await loadDepartments();
       await loadUsers();
     }
 
     setProgress('Загрузка лидов...', 10);
-    // Try fast Supabase first, fallback to Bitrix
     let leads = [], deals = [];
     try {
       setProgress('Загрузка из базы данных...', 15);
       const [leadsRes, dealsRes] = await Promise.all([
-        fetch('/api/data?type=leads&limit=10000', { headers: getAuthHeaders() }).then(r => r.json()),
-        fetch('/api/data?type=deals&limit=5000', { headers: getAuthHeaders() }).then(r => r.json())
+        authFetch('/api/data?type=leads&limit=10000'),
+        authFetch('/api/data?type=deals&limit=5000')
       ]);
       if (Array.isArray(leadsRes) && leadsRes.length > 0) {
         // Map Supabase fields to Bitrix format
