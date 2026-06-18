@@ -1900,8 +1900,8 @@ function fmt(n) { return Number(n || 0).toLocaleString('ru-RU'); }
 function fmtM(n) { n = Number(n || 0); if (n >= 1000000) return (n / 1000000).toFixed(1) + 'М'; if (n >= 1000) return Math.round(n / 1000) + 'K'; return String(n); }
 
 function renderKPI(leads, deals) {
-  const won = deals.filter(d => d.STAGE_ID === 'WON' || d.STAGE_ID === 'FINAL_INVOICE');
-  const lost = deals.filter(d => d.STAGE_ID === 'LOSE');
+  const won = deals.filter(d => d.STAGE_ID?.endsWith(':WON') || d.STAGE_ID?.endsWith(':FINAL_INVOICE'));
+  const lost = deals.filter(d => d.STAGE_ID?.endsWith(':LOSE'));
   const totalAmt = deals.reduce((s, d) => s + Number(d.OPPORTUNITY || 0), 0);
   const wonAmt = won.reduce((s, d) => s + Number(d.OPPORTUNITY || 0), 0);
   const conv = deals.length ? Math.round(won.length / deals.length * 100) : 0;
@@ -1926,7 +1926,7 @@ function renderTimeline(leads, deals) {
   const countBy = (arr, f) => { const c = {}; arr.forEach(r => { const m = (r[f] || '').slice(0, 7); c[m] = (c[m] || 0) + 1; }); return c; };
   const lc = countBy(leads, 'DATE_CREATE');
   const dc = countBy(deals, 'DATE_CREATE');
-  const wc = countBy(deals.filter(d => d.STAGE_ID === 'WON'), 'DATE_CREATE');
+  const wc = countBy(deals.filter(d => d.STAGE_ID?.endsWith(':WON')), 'DATE_CREATE');
   if (chartTimeline) chartTimeline.destroy();
   chartTimeline = new Chart(document.getElementById('chartTimeline'), {
     type: 'line',
@@ -1969,7 +1969,9 @@ function renderDealsFunnel(deals) {
   const sorted = Object.entries(stages).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const max = sorted[0]?.[1] || 1;
   const colors = ['#00c896', '#4f8ef7', '#f7934f', '#e45c8a', '#9b8ef7', '#f7d34f', '#5cdce4', '#fb923c'];
-  const stageNames = { 'NEW': 'Новая', 'PREPARATION': 'Подготовка', 'PREPAYMENT_INVOICE': 'Счёт аванса', 'EXECUTING': 'В работе', 'FINAL_INVOICE': 'Финальный счёт', 'WON': 'Выиграно ✓', 'LOSE': 'Проиграно ✗', 'APOLOGY': 'Претензия' };
+  const stageNames = { 'NEW': 'Новая', 'PREPARATION': 'Подготовка', 'PREPAYMENT_INVOICE': 'Счёт аванса', 'PREPAYMENT_INVOIC': 'Счёт аванса', 'EXECUTING': 'В работе', 'FINAL_INVOICE': 'Финальный счёт', 'WON': 'Выиграно ✓', 'LOSE': 'Проиграно ✗', 'APOLOGY': 'Претензия' };
+  // Strip category prefix e.g. "C31:WON" -> "WON"
+  function stageLabel(id) { const key = id?.includes(':') ? id.split(':').pop() : id; return stageNames[key] || id; }
   document.getElementById('funnelChart').innerHTML = sorted.length
     ? sorted.map(([stage, count], i) => `
       <div class="funnel-row">
@@ -1983,7 +1985,7 @@ function renderDealsFunnel(deals) {
 function renderManagers(leads, deals) {
   const mgrs = {};
   leads.forEach(l => { const id = l.ASSIGNED_BY_ID; if (!id || !allUsers[id]) return; if (!mgrs[id]) mgrs[id] = { leads: 0, deals: 0, won: 0 }; mgrs[id].leads++; });
-  deals.forEach(d => { const id = d.ASSIGNED_BY_ID; if (!id || !allUsers[id]) return; if (!mgrs[id]) mgrs[id] = { leads: 0, deals: 0, won: 0 }; mgrs[id].deals++; if (d.STAGE_ID === 'WON') mgrs[id].won++; });
+  deals.forEach(d => { const id = d.ASSIGNED_BY_ID; if (!id || !allUsers[id]) return; if (!mgrs[id]) mgrs[id] = { leads: 0, deals: 0, won: 0 }; mgrs[id].deals++; if (d.STAGE_ID?.endsWith(':WON')) mgrs[id].won++; });
   const sorted = Object.entries(mgrs).sort((a, b) => b[1].leads - a[1].leads).slice(0, 7);
   const maxL = Math.max(...sorted.map(e => e[1].leads), 1);
   const pal = ['#00c896', '#4f8ef7', '#f7934f', '#e45c8a', '#9b8ef7', '#f7d34f', '#5cdce4'];
